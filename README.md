@@ -204,15 +204,92 @@ NEVER use Read, Grep, or any other tool to access .env, .env.local,
 .env.production, or any environment variable files.
 ```
 
+## LSP Tools (Code Intelligence)
+
+PRO0 agents can use LSP (Language Server Protocol) for advanced code intelligence features like go-to-definition, find-references, and symbol search.
+
+### Setup
+
+1. **Enable experimental features:**
+   ```bash
+   export OPENCODE_EXPERIMENTAL=true
+   ```
+
+2. **LSP servers are auto-configured** for 30+ languages in OpenCode (TypeScript, Python, Rust, Go, Java, etc.)
+
+3. **Optional: Configure custom LSP servers** in `~/.config/opencode/opencode.json`:
+   ```json
+   {
+     "lsp": {
+       "typescript": {
+         "disabled": false,
+         "command": ["typescript-language-server", "--stdio"]
+       }
+     }
+   }
+   ```
+
+### Available Operations
+
+Agents can use these LSP operations:
+- `goToDefinition` - Jump to symbol definition
+- `findReferences` - Find all usages across workspace
+- `hover` - Get type information and documentation
+- `documentSymbol` - Get file outline/structure
+- `workspaceSymbol` - Search for symbols across workspace
+- `goToImplementation` - Find implementations of interfaces
+
+See [OpenCode LSP docs](https://opencode.ai/docs/lsp) for complete documentation.
+
+## Background Agents (Parallel Execution)
+
+PRO0 supports running multiple specialists in parallel for faster execution.
+
+### Using Background Tasks
+
+```typescript
+// Start background task
+delegate_task({
+  subagent_type: "styling",
+  prompt: "Design login form",
+  run_in_background: true
+})
+// Returns: { task_id: "bg_styling_123...", status: "pending" }
+
+// Continue working while background task runs...
+
+// Retrieve results later
+background_output({ task_id: "bg_styling_123..." })
+
+// Or get all background task results
+background_output({ all: true })
+
+// Cancel if needed
+background_cancel({ task_id: "bg_styling_123..." })
+background_cancel({ all: true })  // Cancel all
+```
+
+### Benefits
+
+- **3-5x faster** execution for independent tasks
+- Specialists work simultaneously
+- Main agent continues while specialists process
+- Retrieve results when ready
+
 ## Why PRO0 vs oh-my-opencode?
 
 | Feature | oh-my-opencode | PRO0 |
 |---------|----------------|------|
-| **Agents** | 10+ agents | 2 core + 5 specialists |
+| **Agents** | 10+ agents | 2 core + 6 specialists |
 | **Config file** | `oh-my-opencode.json` | `pro0.json` |
 | **Model fallback** | 3-step provider chain | **Strict: error if missing** |
 | **Skills** | Explicit config | **Auto-scan + blacklist** |
 | **Verification** | Optional hooks | **Built-in, always runs** |
+| **Background agents** | ✅ Complex system | **✅ Simple, built-in** |
+| **LSP tools** | ✅ Via OpenCode | **✅ Via OpenCode** |
+| **MCP integration** | ✅ Via skill_mcp | **✅ Via skill_mcp** |
+| **Ralph Loop** | ✅ With todo enforcer | **✅ Max 5 iterations** |
+| **Code review** | ✅ Via hooks | **✅ Self-review specialist** |
 | **Complexity** | High | **Low** |
 | **.env protection** | Not emphasized | **Built-in warnings** |
 

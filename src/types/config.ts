@@ -52,6 +52,12 @@ export interface VerificationConfig {
   regression_check?: boolean;
 }
 
+export interface BackgroundTasksConfig {
+  max_concurrent_per_provider?: number;
+  max_concurrent_total?: number;
+  cleanup_after_ms?: number;
+}
+
 /**
  * Partial config types for deep merge
  */
@@ -61,4 +67,5 @@ export type PartialPro0Config = {
   specialists?: Partial<SpecialistsConfig>;
   skills?: Partial<SkillsConfig>;
   verification?: Partial<VerificationConfig>;
+  background_tasks?: Partial<BackgroundTasksConfig>;
 };

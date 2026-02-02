@@ -4,6 +4,7 @@
  */
 
 import type { Pro0Config } from '../types/config.js';
+import { delegateTask, type DelegateTaskResult } from './delegate-task.js';
 
 export interface SpecialistTask {
   specialist: 'styling' | 'security' | 'testing' | 'docs' | 'research';
@@ -33,11 +34,12 @@ export interface DispatchResult {
  */
 export async function dispatchSpecialists(
   tasks: SpecialistTask[],
-  config: Pro0Config
+  config: Pro0Config,
+  context?: any
 ): Promise<DispatchResult[]> {
   const results: DispatchResult[] = [];
 
-  // Validate all specialists are enabled
+  // Execute all tasks using delegate_task
   for (const task of tasks) {
     const specialistConfig = config.specialists[task.specialist];
     if (!specialistConfig?.enabled) {
@@ -49,11 +51,21 @@ export async function dispatchSpecialists(
       continue;
     }
 
-    // For now, mark as pending - actual implementation would use delegate_task
+    // Use delegate_task for actual execution
+    const delegateResult = await delegateTask({
+      subagent_type: task.specialist,
+      load_skills: [], // Skills can be added later if needed
+      prompt: task.task,
+      run_in_background: task.background ?? false
+    }, config, context);
+
     results.push({
       specialist: task.specialist,
-      status: 'pending',
-      taskId: `${task.specialist}-${Date.now()}`,
+      status: delegateResult.status === 'pending' ? 'pending' : 
+              delegateResult.status === 'running' ? 'pending' :
+              delegateResult.status === 'error' ? 'error' : 'completed',
+      taskId: delegateResult.task_id,
+      error: delegateResult.status === 'error' ? delegateResult.message : undefined
     });
   }
 

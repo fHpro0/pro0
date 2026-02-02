@@ -252,6 +252,32 @@
           "description": "Ensure unchanged functions still pass tests"
         }
       }
+    },
+    "background_tasks": {
+      "type": "object",
+      "description": "Background task execution configuration",
+      "properties": {
+        "max_concurrent_per_provider": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "default": 5,
+          "description": "Maximum concurrent background tasks per model provider"
+        },
+        "max_concurrent_total": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "default": 10,
+          "description": "Maximum total concurrent background tasks across all providers"
+        },
+        "cleanup_after_ms": {
+          "type": "integer",
+          "minimum": 60000,
+          "default": 3600000,
+          "description": "Auto-cleanup completed tasks older than this duration (milliseconds, minimum 1 minute)"
+        }
+      }
     }
   },
   "required": ["proPlanner", "proExecutor"]
