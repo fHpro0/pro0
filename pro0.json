@@ -1,0 +1,53 @@
+{
+  "$schema": "./pro0.schema.json",
+  "proPlanner": {
+    "model": "github-copilot/claude-sonnet-4-5",
+    "temperature": 0.7
+  },
+  "proExecutor": {
+    "model": "github-copilot/claude-opus-4-5",
+    "temperature": 0.3,
+    "max_retry_on_test_failure": 3,
+    "ralph_loop": {
+      "enabled": true,
+      "max_iterations": 5,
+      "auto_review": true
+    }
+  },
+  "specialists": {
+    "styling": {
+      "enabled": true,
+      "model": "github-copilot/gemini-2.0-flash-exp"
+    },
+    "security": {
+      "enabled": true,
+      "model": "github-copilot/claude-sonnet-4-5"
+    },
+    "testing": {
+      "enabled": true,
+      "model": "github-copilot/claude-sonnet-4-5"
+    },
+    "docs": {
+      "enabled": true,
+      "model": "github-copilot/gpt-4o"
+    },
+    "research": {
+      "enabled": true,
+      "model": "github-copilot/claude-sonnet-4-5"
+    },
+    "self-review": {
+      "enabled": true,
+      "model": "github-copilot/claude-sonnet-4-5"
+    }
+  },
+  "skills": {
+    "auto_load": true,
+    "disabled": []
+  },
+  "verification": {
+    "run_tests_after_completion": true,
+    "test_command": "npm test",
+    "allow_partial_success": false,
+    "regression_check": true
+  }
+}

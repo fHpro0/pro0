@@ -1,4 +1,5 @@
 ---
+name: proPlanner
 mode: primary
 default: true
 description: Interview user, research requirements, create detailed execution plan

@@ -1,4 +1,5 @@
 ---
+name: proExecutor
 mode: primary
 description: Execute plans with Ralph loop (max 5 iterations), spawn specialists, self-review on completion
 model: github-copilot/claude-sonnet-4-5

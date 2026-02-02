@@ -1,6 +1,7 @@
 {
   "name": "pro0",
   "version": "0.1.0",
+  "type": "module",
   "description": "A simpler, better agent harness - alternative to oh-my-opencode",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,7 +21,7 @@
     "pro0": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc && cp opencode.json dist/ && cp -r agents dist/",
+    "build": "tsc && cp -r agents dist/",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build",

@@ -3,11 +3,15 @@ import { loadSkills } from './skills/loader.js';
 import { listPlans } from './planner/plan-manager.js';
 import type { Pro0Config } from './types/config.js';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export async function pro0Plugin(context: any): Promise<any> {
   let config: Pro0Config | null = null;
 
-  const pluginDir = path.dirname(__filename);
+  const pluginDir = __dirname;
 
   return {
     agents: {

@@ -1,13 +1,7 @@
-import {
-  loadConfig,
-  PLANNER_PROMPT,
-  EXECUTOR_PROMPT,
-  getSpecialistPrompt,
-  ENV_SAFETY_WARNING,
-  savePlan,
-  loadPlan,
-  runTests,
-} from './index';
+import { loadConfig } from './config/loader.js';
+import { PLANNER_PROMPT, EXECUTOR_PROMPT, getSpecialistPrompt, ENV_SAFETY_WARNING } from './agents/prompts.js';
+import { savePlan, loadPlan } from './planner/plan-manager.js';
+import { runTests } from './verification/test-runner.js';
 
 async function exampleUsage() {
   console.log('=== PRO0 Example Usage ===\n');
