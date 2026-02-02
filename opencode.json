@@ -1,0 +1,33 @@
+{
+  "$schema": "https://opencode.ai/schema/opencode.json",
+  "agents": {
+    "proPlanner": {
+      "mode": "primary",
+      "source": "agents/planner.md"
+    },
+    "proExecutor": {
+      "mode": "primary",
+      "source": "agents/executor.md"
+    },
+    "styling": {
+      "mode": "subagent",
+      "source": "agents/styling.md"
+    },
+    "security": {
+      "mode": "subagent",
+      "source": "agents/security.md"
+    },
+    "testing": {
+      "mode": "subagent",
+      "source": "agents/testing.md"
+    },
+    "docs": {
+      "mode": "subagent",
+      "source": "agents/docs.md"
+    },
+    "research": {
+      "mode": "subagent",
+      "source": "agents/research.md"
+    }
+  }
+}

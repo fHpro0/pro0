@@ -1,0 +1,258 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "PRO0 Configuration",
+  "description": "Configuration file for PRO0 agent harness",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "proPlanner": {
+      "type": "object",
+      "description": "Planner agent configuration",
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Model to use for Planner agent (e.g., 'github-copilot/claude-sonnet-4-5')"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Temperature for model sampling (0-2)"
+        },
+        "top_p": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Top-p (nucleus sampling) parameter"
+        }
+      },
+      "required": ["model"]
+    },
+    "proExecutor": {
+      "type": "object",
+      "description": "Executor agent configuration",
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Model to use for Executor agent (e.g., 'github-copilot/claude-opus-4-5')"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Temperature for model sampling (0-2)"
+        },
+        "top_p": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Top-p (nucleus sampling) parameter"
+        },
+        "max_retry_on_test_failure": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 3,
+          "description": "Maximum number of retries when tests fail"
+        },
+        "ralph_loop": {
+          "type": "object",
+          "description": "Ralph loop configuration for iterative task execution",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable Ralph loop (iterative execution with self-review)"
+            },
+            "max_iterations": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10,
+              "default": 5,
+              "description": "Maximum number of iterations before triggering self-review"
+            },
+            "auto_review": {
+              "type": "boolean",
+              "default": true,
+              "description": "Automatically trigger self-review when all tasks complete"
+            }
+          }
+        }
+      },
+      "required": ["model"]
+    },
+    "specialists": {
+      "type": "object",
+      "description": "Specialist subagent configurations",
+      "properties": {
+        "styling": {
+          "type": "object",
+          "description": "Styling specialist (UI/UX, CSS, design)",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable this specialist"
+            },
+            "model": {
+              "type": "string",
+              "description": "Model to use for this specialist"
+            },
+            "temperature": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            }
+          },
+          "required": ["enabled", "model"]
+        },
+        "security": {
+          "type": "object",
+          "description": "Security specialist (vulnerability checks, code review)",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable this specialist"
+            },
+            "model": {
+              "type": "string",
+              "description": "Model to use for this specialist"
+            },
+            "temperature": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            }
+          },
+          "required": ["enabled", "model"]
+        },
+        "testing": {
+          "type": "object",
+          "description": "Testing specialist (write/update tests)",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable this specialist"
+            },
+            "model": {
+              "type": "string",
+              "description": "Model to use for this specialist"
+            },
+            "temperature": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            }
+          },
+          "required": ["enabled", "model"]
+        },
+        "docs": {
+          "type": "object",
+          "description": "Documentation specialist (create/update docs)",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable this specialist"
+            },
+            "model": {
+              "type": "string",
+              "description": "Model to use for this specialist"
+            },
+            "temperature": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            }
+          },
+          "required": ["enabled", "model"]
+        },
+        "research": {
+          "type": "object",
+          "description": "Research specialist (external docs, OSS examples)",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable this specialist"
+            },
+            "model": {
+              "type": "string",
+              "description": "Model to use for this specialist"
+            },
+            "temperature": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            }
+          },
+          "required": ["enabled", "model"]
+        },
+        "self-review": {
+          "type": "object",
+          "description": "Self-review specialist (comprehensive review after task completion)",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable this specialist"
+            },
+            "model": {
+              "type": "string",
+              "description": "Model to use for this specialist"
+            },
+            "temperature": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            }
+          },
+          "required": ["enabled", "model"]
+        }
+      }
+    },
+    "skills": {
+      "type": "object",
+      "description": "Skills configuration",
+      "properties": {
+        "auto_load": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically scan and load skills from directories"
+        },
+        "disabled": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of skill names to exclude from auto-loading"
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "description": "Verification and testing configuration",
+      "properties": {
+        "run_tests_after_completion": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run tests after execution completes"
+        },
+        "test_command": {
+          "type": "string",
+          "default": "npm test",
+          "description": "Command to run tests"
+        },
+        "allow_partial_success": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow some test failures (report but don't block)"
+        },
+        "regression_check": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ensure unchanged functions still pass tests"
+        }
+      }
+    }
+  },
+  "required": ["proPlanner", "proExecutor"]
+}

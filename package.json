@@ -1,0 +1,60 @@
+{
+  "name": "pro0",
+  "version": "0.1.0",
+  "description": "A simpler, better agent harness - alternative to oh-my-opencode",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./plugin": {
+      "import": "./dist/opencode-plugin.js",
+      "require": "./dist/opencode-plugin.js",
+      "types": "./dist/opencode-plugin.d.ts"
+    }
+  },
+  "bin": {
+    "pro0": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc && cp opencode.json dist/ && cp -r agents dist/",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "test": "echo \"Tests coming soon\" && exit 0"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "llm",
+    "opencode",
+    "opencode-plugin",
+    "automation",
+    "planner",
+    "executor",
+    "pro0"
+  ],
+  "files": [
+    "dist",
+    "agents",
+    "pro0.schema.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "^1.1.36",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
