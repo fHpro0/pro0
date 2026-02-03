@@ -15,7 +15,7 @@
     "pro0": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc && cp -r agents dist/",
+    "build": "tsc && rm -rf dist/agents && cp -r agents dist/",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build",
