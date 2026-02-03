@@ -9,43 +9,92 @@ const GLOBAL_CONFIG_PATH = path.join(GLOBAL_CONFIG_DIR, CONFIG_FILENAME);
 
 const DEFAULT_CONFIG: Pro0Config = {
   proPlanner: {
-    model: 'github-copilot/claude-sonnet-4-5',
+    model: 'github-copilot/claude-opus-4-5',
     temperature: 0.7,
+    mandatory_todos: true,
+    prd_workflow: {
+      enabled: true,
+      require_approval: true,
+    },
   },
-  proExecutor: {
+  proManager: {
     model: 'github-copilot/claude-sonnet-4-5',
     temperature: 0.3,
     max_retry_on_test_failure: 3,
+    coding_allowed: false,
+    mandatory_todos: true,
     ralph_loop: {
       enabled: true,
       max_iterations: 5,
       auto_review: true,
+      continuation: {
+        enabled: true,
+        ask_user_at_max: true,
+        default_extension: 5,
+      },
     },
   },
   specialists: {
-    styling: {
+    designer: {
       enabled: true,
-      model: 'github-copilot/gemini-2.0-flash-exp',
+      model: 'github-copilot/gemini-3-pro-preview',
+      temperature: 0.7,
+      scope: 'frontend-components',
     },
-    security: {
+    'frontend-coder': {
+      enabled: true,
+      model: 'github-copilot/gpt-5.2-codex',
+      temperature: 0.3,
+    },
+    'backend-coder': {
+      enabled: true,
+      model: 'github-copilot/gpt-5.2-codex',
+      temperature: 0.3,
+    },
+    'database-coder': {
       enabled: true,
       model: 'github-copilot/claude-sonnet-4-5',
+      temperature: 0.2,
     },
-    testing: {
+    'api-coder': {
       enabled: true,
       model: 'github-copilot/claude-sonnet-4-5',
+      temperature: 0.3,
     },
-    docs: {
-      enabled: false,
-      model: 'github-copilot/gpt-4o',
-    },
-    research: {
+    tester: {
       enabled: true,
       model: 'github-copilot/claude-sonnet-4-5',
+      temperature: 0.3,
+    },
+    'security-auditor': {
+      enabled: true,
+      model: 'github-copilot/claude-sonnet-4-5',
+      temperature: 0.2,
+    },
+    'devops-engineer': {
+      enabled: true,
+      model: 'github-copilot/gpt-5.2',
+      temperature: 0.3,
+    },
+    'documentation-writer': {
+      enabled: true,
+      model: 'github-copilot/gpt-5.2',
+      temperature: 0.5,
+    },
+    'document-viewer': {
+      enabled: true,
+      model: 'github-copilot/gemini-3-flash-preview',
+      temperature: 0.3,
+    },
+    researcher: {
+      enabled: true,
+      model: 'github-copilot/claude-haiku-4-5',
+      temperature: 0.4,
     },
     'self-review': {
       enabled: true,
-      model: 'github-copilot/claude-sonnet-4-5',
+      model: 'github-copilot/gpt-5.2-codex',
+      temperature: 0.75,
     },
   },
   skills: {
@@ -57,6 +106,13 @@ const DEFAULT_CONFIG: Pro0Config = {
     test_command: 'npm test',
     allow_partial_success: false,
     regression_check: true,
+  },
+  background_tasks: {
+    enabled: true,
+    auto_parallel_threshold: 2,
+    max_concurrent_per_provider: 5,
+    max_concurrent_total: 10,
+    cleanup_after_ms: 3600000,
   },
 };
 
@@ -148,16 +204,30 @@ export function validateConfig(config: Pro0Config): void {
     );
   }
 
-  if (!config.proExecutor?.model) {
+  if (!config.proManager?.model) {
     throw new Error(
-      `Error: No model configured for agent 'proExecutor'. Please set 'proExecutor.model' in ${GLOBAL_CONFIG_PATH} or .opencode/${CONFIG_FILENAME}`
+      `Error: No model configured for agent 'proManager'. Please set 'proManager.model' in ${GLOBAL_CONFIG_PATH} or .opencode/${CONFIG_FILENAME}`
     );
   }
 
-  const specialists = ['styling', 'security', 'testing', 'docs', 'research'] as const;
+  const specialists = [
+    'designer',
+    'frontend-coder',
+    'backend-coder',
+    'database-coder',
+    'api-coder',
+    'tester',
+    'security-auditor',
+    'devops-engineer',
+    'documentation-writer',
+    'document-viewer',
+    'researcher',
+    'self-review',
+  ] as const;
+  
   for (const specialist of specialists) {
     const specialistConfig = config.specialists[specialist];
-    if (specialistConfig.enabled && !specialistConfig.model) {
+    if (specialistConfig?.enabled && !specialistConfig.model) {
       throw new Error(
         `Error: No model configured for enabled specialist '${specialist}'. Please set 'specialists.${specialist}.model' in ${GLOBAL_CONFIG_PATH} or .opencode/${CONFIG_FILENAME}`
       );

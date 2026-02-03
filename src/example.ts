@@ -9,7 +9,7 @@ async function exampleUsage() {
   console.log('1. Loading configuration...');
   const config = loadConfig(process.cwd());
   console.log(`   Planner model: ${config.proPlanner.model}`);
-  console.log(`   Executor model: ${config.proExecutor.model}`);
+  console.log(`   Manager model: ${config.proManager.model}`);
   console.log(`   Specialists enabled: ${Object.entries(config.specialists)
     .filter(([_, s]) => s.enabled)
     .map(([name]) => name)
@@ -59,7 +59,7 @@ async function exampleUsage() {
   console.log('   (Simulated - would run actual tests in production)');
   console.log(`   Test command: ${config.verification?.test_command}`);
   console.log(`   Regression check: ${config.verification?.regression_check}`);
-  console.log(`   Max retries: ${config.proExecutor.max_retry_on_test_failure}\n`);
+  console.log(`   Max retries: ${config.proManager.max_retry_on_test_failure}\n`);
 
   console.log('8. .env Safety Warning (appears in every agent prompt):');
   console.log(ENV_SAFETY_WARNING);

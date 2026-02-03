@@ -78,7 +78,7 @@ export function shouldRetry(
   attemptNumber: number,
   testResult: TestResult
 ): boolean {
-  const maxRetries = config.proExecutor.max_retry_on_test_failure || 3;
+  const maxRetries = config.proManager.max_retry_on_test_failure || 3;
   const allowPartialSuccess = config.verification?.allow_partial_success || false;
 
   if (testResult.passed) {

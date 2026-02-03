@@ -22,6 +22,61 @@
 
 ## Installation
 
+### As OpenCode Plugin (Recommended)
+
+1. Install the plugin:
+
+```bash
+npm install -g pro0
+# or
+bun add -g pro0
+```
+
+2. Configure OpenCode to use PRO0 agents (`~/.config/opencode/opencode.json`):
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["pro0"],
+  "default_agent": "proPlanner"
+}
+```
+
+This configuration:
+- Loads the PRO0 plugin (adds 8 agents: proPlanner, proExecutor + 6 specialists)
+- Sets `proPlanner` as the default agent
+
+3. Start using OpenCode:
+
+```bash
+cd your-project
+opencode
+```
+
+You should now see **proPlanner** as the active agent in the UI!
+
+4. Switch between agents:
+   - **Tab** key: Cycle through all primary agents (`proPlanner` ↔ `proExecutor` ↔ `build` ↔ `plan`)
+   - **@ mention**: Invoke specialists (`@styling`, `@security`, `@testing`, `@docs`, `@research`, `@self-review`)
+
+**Note:** PRO0 agents coexist with OpenCode's built-in agents. You can switch between them using Tab. If you only want PRO0 agents, you can disable the built-in ones:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["pro0"],
+  "default_agent": "proPlanner",
+  "agent": {
+    "build": { "disable": true },
+    "plan": { "disable": true }
+  }
+}
+```
+
+This disables `build` and `plan` while keeping PRO0's `proPlanner` and `proExecutor`.
+
+### As Standalone Package
+
 ```bash
 npm install pro0
 # or

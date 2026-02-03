@@ -8,13 +8,7 @@
   "exports": {
     ".": {
       "import": "./dist/index.js",
-      "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    },
-    "./plugin": {
-      "import": "./dist/opencode-plugin.js",
-      "require": "./dist/opencode-plugin.js",
-      "types": "./dist/opencode-plugin.d.ts"
     }
   },
   "bin": {

@@ -1,44 +1,100 @@
 {
   "$schema": "./pro0.schema.json",
   "proPlanner": {
-    "model": "github-copilot/claude-sonnet-4-5",
-    "temperature": 0.7
-  },
-  "proExecutor": {
     "model": "github-copilot/claude-opus-4-5",
+    "temperature": 0.7,
+    "mandatory_todos": true,
+    "prd_workflow": {
+      "enabled": true,
+      "require_approval": true
+    }
+  },
+  "proManager": {
+    "model": "github-copilot/claude-sonnet-4-5",
     "temperature": 0.3,
     "max_retry_on_test_failure": 3,
+    "coding_allowed": false,
+    "mandatory_todos": true,
     "ralph_loop": {
       "enabled": true,
       "max_iterations": 5,
-      "auto_review": true
+      "auto_review": true,
+      "continuation": {
+        "enabled": true,
+        "ask_user_at_max": true,
+        "default_extension": 5
+      }
     }
   },
   "specialists": {
-    "styling": {
+    "designer": {
       "enabled": true,
-      "model": "github-copilot/gemini-2.0-flash-exp"
+      "model": "github-copilot/gemini-3-pro-preview",
+      "temperature": 0.7,
+      "scope": "frontend-components"
     },
-    "security": {
+    "frontend-coder": {
       "enabled": true,
-      "model": "github-copilot/claude-sonnet-4-5"
+      "model": "github-copilot/gpt-5.2-codex",
+      "temperature": 0.3
     },
-    "testing": {
+    "backend-coder": {
       "enabled": true,
-      "model": "github-copilot/claude-sonnet-4-5"
+      "model": "github-copilot/gpt-5.2-codex",
+      "temperature": 0.3
     },
-    "docs": {
+    "database-coder": {
       "enabled": true,
-      "model": "github-copilot/gpt-4o"
+      "model": "github-copilot/claude-sonnet-4-5",
+      "temperature": 0.2
     },
-    "research": {
+    "api-coder": {
       "enabled": true,
-      "model": "github-copilot/claude-sonnet-4-5"
+      "model": "github-copilot/claude-sonnet-4-5",
+      "temperature": 0.3
+    },
+    "tester": {
+      "enabled": true,
+      "model": "github-copilot/claude-sonnet-4-5",
+      "temperature": 0.3
+    },
+    "security-auditor": {
+      "enabled": true,
+      "model": "github-copilot/claude-sonnet-4-5",
+      "temperature": 0.2
+    },
+    "devops-engineer": {
+      "enabled": true,
+      "model": "github-copilot/gpt-5.2",
+      "temperature": 0.3
+    },
+    "documentation-writer": {
+      "enabled": true,
+      "model": "github-copilot/gpt-5.2",
+      "temperature": 0.5
+    },
+    "document-viewer": {
+      "enabled": true,
+      "model": "github-copilot/gemini-3-flash-preview",
+      "temperature": 0.3
+    },
+    "researcher": {
+      "enabled": true,
+      "model": "github-copilot/claude-haiku-4-5",
+      "temperature": 0.4
     },
     "self-review": {
       "enabled": true,
-      "model": "github-copilot/claude-sonnet-4-5"
+      "model": "github-copilot/gpt-5.2-codex",
+      "temperature": 0.75
     }
+  },
+  "background_tasks": {
+    "enabled": true,
+    "auto_parallel_threshold": 2,
+    "max_concurrent_per_provider": 5,
+    "max_concurrent_total": 10,
+    "cleanup_after_ms": 3600000
   },
   "skills": {
     "auto_load": true,

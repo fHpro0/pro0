@@ -31,13 +31,57 @@
       },
       "required": ["model"]
     },
-    "proExecutor": {
+    "proPlanner": {
       "type": "object",
-      "description": "Executor agent configuration",
+      "description": "Planner agent configuration",
       "properties": {
         "model": {
           "type": "string",
-          "description": "Model to use for Executor agent (e.g., 'github-copilot/claude-opus-4-5')"
+          "description": "Model to use for Planner agent (e.g., 'github-copilot/claude-opus-4-5')"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Temperature for model sampling (0-2)"
+        },
+        "top_p": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Top-p (nucleus sampling) parameter"
+        },
+        "mandatory_todos": {
+          "type": "boolean",
+          "default": true,
+          "description": "Require TodoWrite tool usage for planning tasks"
+        },
+        "prd_workflow": {
+          "type": "object",
+          "description": "PRD (Product Requirements Document) workflow configuration",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable two-phase PRD workflow (PRD → Plan)"
+            },
+            "require_approval": {
+              "type": "boolean",
+              "default": true,
+              "description": "Require user approval between PRD and execution plan"
+            }
+          }
+        }
+      },
+      "required": ["model"]
+    },
+    "proManager": {
+      "type": "object",
+      "description": "Manager agent configuration (pure orchestration, no coding)",
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Model to use for Manager agent (e.g., 'github-copilot/claude-sonnet-4-5')"
         },
         "temperature": {
           "type": "number",
@@ -56,6 +100,16 @@
           "minimum": 1,
           "default": 3,
           "description": "Maximum number of retries when tests fail"
+        },
+        "coding_allowed": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether Manager is allowed to write code (should be false for pure delegation)"
+        },
+        "mandatory_todos": {
+          "type": "boolean",
+          "default": true,
+          "description": "Require TodoWrite tool usage for tracking progress"
         },
         "ralph_loop": {
           "type": "object",
@@ -77,6 +131,29 @@
               "type": "boolean",
               "default": true,
               "description": "Automatically trigger self-review when all tasks complete"
+            },
+            "continuation": {
+              "type": "object",
+              "description": "Continuation behavior when max iterations reached",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Ask user for continuation when max iterations reached with incomplete tasks"
+                },
+                "ask_user_at_max": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Prompt user for decision at max iterations"
+                },
+                "default_extension": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10,
+                  "default": 5,
+                  "description": "Default number of additional iterations to offer"
+                }
+              }
             }
           }
         }
@@ -87,9 +164,34 @@
       "type": "object",
       "description": "Specialist subagent configurations",
       "properties": {
-        "styling": {
+        "designer": {
           "type": "object",
-          "description": "Styling specialist (UI/UX, CSS, design)",
+          "description": "Designer specialist (Frontend components, CSS, styling, layouts)",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable this specialist"
+            },
+            "model": {
+              "type": "string",
+              "description": "Model to use for this specialist"
+            },
+            "temperature": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "scope": {
+              "type": "string",
+              "enum": ["visual-only", "frontend-components"],
+              "description": "Designer scope: visual-only (CSS) or frontend-components (includes structure)"
+            }
+          },
+          "required": ["enabled", "model"]
+        },
+        "frontend-coder": {
+          "type": "object",
+          "description": "Frontend Coder specialist (React/Vue logic, state management, hooks)",
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -107,9 +209,9 @@
           },
           "required": ["enabled", "model"]
         },
-        "security": {
+        "backend-coder": {
           "type": "object",
-          "description": "Security specialist (vulnerability checks, code review)",
+          "description": "Backend Coder specialist (Business logic, services, controllers)",
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -127,9 +229,9 @@
           },
           "required": ["enabled", "model"]
         },
-        "testing": {
+        "database-coder": {
           "type": "object",
-          "description": "Testing specialist (write/update tests)",
+          "description": "Database Coder specialist (Schema design, queries, migrations)",
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -147,9 +249,9 @@
           },
           "required": ["enabled", "model"]
         },
-        "docs": {
+        "api-coder": {
           "type": "object",
-          "description": "Documentation specialist (create/update docs)",
+          "description": "API Coder specialist (REST/GraphQL endpoints, routing)",
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -167,9 +269,109 @@
           },
           "required": ["enabled", "model"]
         },
-        "research": {
+        "tester": {
           "type": "object",
-          "description": "Research specialist (external docs, OSS examples)",
+          "description": "Tester specialist (Unit/integration/E2E tests)",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable this specialist"
+            },
+            "model": {
+              "type": "string",
+              "description": "Model to use for this specialist"
+            },
+            "temperature": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            }
+          },
+          "required": ["enabled", "model"]
+        },
+        "security-auditor": {
+          "type": "object",
+          "description": "Security Auditor specialist (Vulnerability checks, security review)",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable this specialist"
+            },
+            "model": {
+              "type": "string",
+              "description": "Model to use for this specialist"
+            },
+            "temperature": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            }
+          },
+          "required": ["enabled", "model"]
+        },
+        "devops-engineer": {
+          "type": "object",
+          "description": "DevOps Engineer specialist (CI/CD, deployment, infrastructure)",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable this specialist"
+            },
+            "model": {
+              "type": "string",
+              "description": "Model to use for this specialist"
+            },
+            "temperature": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            }
+          },
+          "required": ["enabled", "model"]
+        },
+        "documentation-writer": {
+          "type": "object",
+          "description": "Documentation Writer specialist (Create/update docs, README, guides)",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable this specialist"
+            },
+            "model": {
+              "type": "string",
+              "description": "Model to use for this specialist"
+            },
+            "temperature": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            }
+          },
+          "required": ["enabled", "model"]
+        },
+        "document-viewer": {
+          "type": "object",
+          "description": "Document Viewer specialist (Read/analyze documentation, extract information)",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable this specialist"
+            },
+            "model": {
+              "type": "string",
+              "description": "Model to use for this specialist"
+            },
+            "temperature": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            }
+          },
+          "required": ["enabled", "model"]
+        },
+        "researcher": {
+          "type": "object",
+          "description": "Researcher specialist (External docs, OSS examples, web search)",
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -189,7 +391,7 @@
         },
         "self-review": {
           "type": "object",
-          "description": "Self-review specialist (comprehensive review after task completion)",
+          "description": "Self-review specialist (Comprehensive review after task completion)",
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -257,6 +459,18 @@
       "type": "object",
       "description": "Background task execution configuration",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable background task execution"
+        },
+        "auto_parallel_threshold": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 2,
+          "description": "Automatically run tasks in parallel when N or more independent specialists are spawned"
+        },
         "max_concurrent_per_provider": {
           "type": "integer",
           "minimum": 1,
@@ -280,5 +494,5 @@
       }
     }
   },
-  "required": ["proPlanner", "proExecutor"]
+  "required": ["proPlanner", "proManager"]
 }

@@ -16,7 +16,10 @@ Then add to your OpenCode config (`.opencode/opencode.json` or `~/.config/openco
 
 ```json
 {
-  "plugins": ["pro0"]
+  "plugins": ["pro0"],
+  "permission": {
+    "question": "allow"
+  }
 }
 ```
 
@@ -124,7 +127,9 @@ Interviews you, researches requirements, creates detailed execution plan.
 You: "Add user authentication to my Express app"
 
 Planner:
-- Uses `askquestion` tool to gather preferences (JWT vs session? OAuth? Token expiration?)
+- Uses `question` tool to gather preferences (JWT vs session? OAuth? Token expiration?)
+- Questions must be asked via the `question` tool (no plain-text questions)
+- When asking, respond only with the `question` tool call
 - Spawns @research to find best practices
 - Explores existing codebase patterns
 - Creates plan in .pro0/plans/2025-02-02-add-auth.md
