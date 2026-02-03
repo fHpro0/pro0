@@ -12,6 +12,9 @@ import { readFile } from 'fs/promises';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Shared template cache
+let sharedTemplates: { securityWarning: string; todowriteTemplate: string } | null = null;
+
 async function pro0Plugin(context: any): Promise<any> {
   let config: Pro0Config | null = null;
 
@@ -22,13 +25,43 @@ async function pro0Plugin(context: any): Promise<any> {
 
   const readAgentPrompt = async (fileName: string): Promise<string> => {
     const fullPath = path.join(pluginDir, 'agents', fileName);
-    const raw = await readFile(fullPath, 'utf-8');
+    let raw = await readFile(fullPath, 'utf-8');
+    
+    // Strip frontmatter
     if (raw.startsWith('---')) {
       const end = raw.indexOf('\n---', 3);
       if (end !== -1) {
-        return raw.slice(end + 4).trimStart();
+        raw = raw.slice(end + 4).trimStart();
       }
     }
+    
+    // Load shared templates (cached)
+    if (!sharedTemplates) {
+      sharedTemplates = {
+        securityWarning: await readFile(
+          path.join(pluginDir, 'agents', '_shared', 'security-warning.md'),
+          'utf-8'
+        ),
+        todowriteTemplate: await readFile(
+          path.join(pluginDir, 'agents', '_shared', 'todowrite-template.md'),
+          'utf-8'
+        )
+      };
+    }
+    
+    // Replace security warning marker
+    raw = raw.replace(/\{SECURITY_WARNING\}/g, sharedTemplates.securityWarning);
+    
+    // Replace TodoWrite template with specialist-specific content
+    const todowritePattern = /\{TODOWRITE_TEMPLATE\}\s*TRIGGERS:\s*([^\n]+)\s*THRESHOLD:\s*([^\n]+)/g;
+    raw = raw.replace(todowritePattern, (match, triggers, threshold) => {
+      return sharedTemplates!.todowriteTemplate
+        .replace('{TRIGGERS}', triggers.trim())
+        .replace('{THRESHOLD}', threshold.trim())
+        .replace('{EXAMPLE_TASK_1}', 'Complete first task')
+        .replace('{EXAMPLE_TASK_2}', 'Complete second task');
+    });
+    
     return raw;
   };
 
