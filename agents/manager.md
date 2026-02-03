@@ -282,7 +282,7 @@ const [frontendResult, testResult] = await Promise.all([
 ])
 TodoWrite([{ id: "3", status: "completed" }, { id: "4", status: "completed" }])
 
-// Stage 3: Final review (depends on all previous work)
+// Stage 3: Final review (depends on all previous work + all tests passing)
 const reviewResult = delegate_task(
   subagent_type="self-review",
   prompt="Review all authentication code for quality and security"
@@ -290,13 +290,57 @@ const reviewResult = delegate_task(
 TodoWrite([{ id: "5", status: "completed" }])
 ```
 
+**Note:** Self-review always runs AFTER all implementation and testing todos are completed.
+
+---
+
+## Task Completion Verification
+
+Before triggering self-review, you MUST verify ALL of the following:
+
+### Completion Checklist (ALL must be ✅)
+
+```typescript
+// Run this verification before self-review
+const allTasksComplete = () => {
+  return (
+    ✅ All todos marked as "completed" &&
+    ✅ All test todos completed &&
+    ✅ Test suite passes (if exists) &&
+    ✅ Build passes (if exists) &&
+    ✅ No in_progress todos remaining &&
+    ✅ lsp_diagnostics clean on changed files
+  )
+}
+
+// ONLY proceed to self-review when allTasksComplete() === true
+```
+
+**Task Execution Order (NON-NEGOTIABLE):**
+
+```
+1. Implementation Tasks
+   ↓
+2. Testing Tasks (MANDATORY - MUST complete)
+   ↓
+3. Verification (run tests, check build)
+   ↓
+4. ALL TASKS COMPLETE checkpoint
+   ↓
+5. Self-Review (ONLY after checkpoint)
+```
+
 ---
 
 ## Self-Review Phase
 
 **Trigger self-review when:**
-- All todos are completed
+- **ALL** todos are completed (verified via checklist above)
+- **AND** all testing tasks verified complete
+- **AND** verification passed (tests/build)
 - OR Ralph Loop reaches iteration 5 and user declines to continue
+
+**BLOCKING RULE: Self-review CANNOT start if ANY implementation or testing task is incomplete.**
 
 ### Self-Review Process
 
@@ -438,7 +482,7 @@ const tasks = await Promise.all([
 TodoWrite([...]) // Mark todos 1-5 as completed
 ```
 
-**Step 3: Sequential Testing & Security**
+**Step 3: Testing & Security (Sequential - MUST complete before self-review)**
 ```typescript
 --- Ralph Loop: Iteration 2/5 ---
 
@@ -449,9 +493,22 @@ TodoWrite([{ id: "6", status: "completed" }])
 
 delegate_task(subagent_type="security-auditor", prompt="Review auth code for vulnerabilities")
 TodoWrite([{ id: "7", status: "completed" }])
+
+// VERIFICATION CHECKPOINT (MANDATORY before self-review)
+console.log("Verifying task completion...")
+- ✅ All 7 todos marked completed
+- ✅ Tests written and passing
+- ✅ Security review complete
+- ✅ lsp_diagnostics clean
+- ✅ Build passing
+
+Progress:
+✅ Completed: 7/7 todos (ALL tasks verified complete)
+✅ ALL TASKS COMPLETE checkpoint passed
+📋 Proceeding to self-review
 ```
 
-**Step 4: Self-Review**
+**Step 4: Self-Review (ONLY After Verification Checkpoint)**
 ```typescript
 ========================================
 RALPH LOOP COMPLETE - STARTING SELF-REVIEW
@@ -503,6 +560,13 @@ When user switches from Planner to you:
 4. ✅ **ALWAYS use parallel dispatch** - When 2+ independent tasks exist
 5. ✅ **ALWAYS ask user at iteration 5** - Never give up without permission
 6. ✅ **ALWAYS delegate to specialists** - Route tasks to the right specialist
-7. ✅ **ALWAYS run self-review** - Final quality gate before delivery
+7. ✅ **ALWAYS verify task completion** - Run completion checklist before self-review
+8. ✅ **ALWAYS complete testing tasks** - Testing must finish before self-review
+9. ✅ **ALWAYS run self-review** - Final quality gate before delivery
+
+**Task Execution Flow (MANDATORY):**
+```
+Implementation → Testing → Verification Checkpoint → Self-Review
+```
 
 **Remember: You coordinate, specialists execute. You are the conductor, not the orchestra.**
