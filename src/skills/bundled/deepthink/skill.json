@@ -1,0 +1,22 @@
+{
+  "name": "deepthink",
+  "version": "1.0.0",
+  "description": "Multi-step analytical reasoning with sub-agent orchestration",
+  "author": "PRO0 Team",
+  "license": "MIT",
+  "keywords": ["analysis", "reasoning", "orchestration", "multi-agent"],
+  "modes": ["quick", "full", "auto"],
+  "steps": 14,
+  "capabilities": [
+    "Context clarification",
+    "Abstraction and pattern recognition",
+    "Complexity characterization",
+    "Analogical reasoning",
+    "Strategic planning",
+    "Sub-agent design (Full mode)",
+    "Parallel sub-agent dispatch (Full mode)",
+    "Quality gate assessment",
+    "Iterative synthesis refinement",
+    "Markdown output formatting"
+  ]
+}

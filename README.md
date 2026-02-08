@@ -20,6 +20,113 @@
 ✅ **Security First**: `.env` protection built into every agent prompt  
 ✅ **Token Optimized**: 84% reduction in system prompt size via progressive loading  
 
+## Skills
+
+PRO0 includes two bundled skills for enhanced agent capabilities. Skills are automatically routed via the `skill_router` tool (used internally by PRO0 agents), and can also be invoked explicitly.
+
+### 🔍 QMD Skill
+
+Search your local markdown knowledge base using the external `qmd` CLI tool.
+
+Installation:
+
+```bash
+# Install qmd globally
+bun install -g qmd
+# or
+npm install -g qmd
+```
+
+Configuration (add to `~/.config/opencode/pro0.json` or `.opencode/pro0.json`):
+
+```json
+{
+  "skills": {
+    "qmd": {
+      "enabled": true,
+      "searchMode": "bm25",
+      "minScore": 0.3,
+      "timeout": 30000,
+      "mcp": {
+        "enabled": false
+      }
+    }
+  }
+}
+```
+
+Usage:
+
+- Auto-detected for queries like: "search my notes for X", "find in docs about Y", "check knowledge base for Z"
+- Explicit via tool call:
+
+```ts
+skill_router({ query: "search my notes for authentication patterns" })
+```
+
+Internal API (PRO0 contributors):
+
+```ts
+import { executeQmdSearch } from "./src/skills/bundled/qmd/executor";
+
+const results = await executeQmdSearch("authentication patterns", {
+  mode: "bm25",
+  minScore: 0.3,
+});
+```
+
+---
+
+### 🧠 Deepthink Skill
+
+Deep analytical reasoning with a 14-step workflow for complex questions.
+
+Configuration:
+
+```json
+{
+  "skills": {
+    "deepthink": {
+      "enabled": true,
+      "defaultMode": "auto",
+      "maxIterations": 5,
+      "subAgentModel": "github-copilot/claude-sonnet-4-5"
+    }
+  }
+}
+```
+
+Modes:
+
+- Quick mode (7 steps): for moderate complexity questions
+- Full mode (14 steps): for highly complex, multi-domain analysis with sub-agents
+- Auto mode (recommended): Step 3 decides Quick vs Full based on complexity
+
+Usage:
+
+- Auto-detected for analytical queries like: "Why did X happen?", "Compare X vs Y", "How does X work and what are the implications?"
+- Explicit via tool call:
+
+```ts
+skill_router({ query: "Why did the Roman Empire fall?", force_skill: "deepthink" })
+```
+
+Internal API (PRO0 contributors):
+
+```ts
+import { executeDeepthink } from "./src/skills/bundled/deepthink";
+
+const analysis = await executeDeepthink("Why did the Roman Empire fall?", "auto");
+```
+
+Guides:
+
+- `docs/skills/qmd.md`
+- `docs/skills/deepthink.md`
+
+See `docs/configuration.md` for configuration file locations and all options.
+
+
 ## Installation
 
 ### As OpenCode Plugin (Recommended)
@@ -103,20 +210,13 @@ Edit `~/.config/opencode/pro0.json`:
 ```json
 {
   "$schema": "https://raw.githubusercontent.com/YOUR_REPO/main/pro0.schema.json",
-  "planner": {
-    "model": "github-copilot/claude-sonnet-4-5",
+  "proPlanner": {
+    "model": "github-copilot/claude-opus-4-5",
     "temperature": 0.7
   },
-  "executor": {
-    "model": "github-copilot/claude-opus-4-5",
+  "proManager": {
+    "model": "github-copilot/claude-sonnet-4-5",
     "temperature": 0.3
-  },
-  "specialists": {
-    "styling": { "enabled": true, "model": "github-copilot/gemini-2.0-flash-exp" },
-    "security": { "enabled": true, "model": "github-copilot/claude-sonnet-4-5" },
-    "testing": { "enabled": true, "model": "github-copilot/claude-sonnet-4-5" },
-    "docs": { "enabled": false, "model": "github-copilot/gpt-4o" },
-    "research": { "enabled": true, "model": "github-copilot/claude-sonnet-4-5" }
   }
 }
 ```
@@ -127,8 +227,8 @@ Edit `~/.config/opencode/pro0.json`:
 import { loadConfig, PLANNER_PROMPT, EXECUTOR_PROMPT } from 'pro0';
 
 const config = loadConfig(process.cwd());
-console.log('Planner model:', config.planner.model);
-console.log('Executor model:', config.executor.model);
+console.log('Planner model:', config.proPlanner.model);
+console.log('Manager model:', config.proManager.model);
 ```
 
 ### 3. CLI Commands
@@ -166,11 +266,11 @@ Result:  { planner: { model: "gpt-4", temperature: 0.3 }, executor: { model: "cl
 **NO FALLBACKS.** If a model is missing, you get a clear error:
 
 ```
-Error: No model configured for agent 'planner'.
-Please set 'planner.model' in ~/.config/opencode/pro0.json or .opencode/pro0.json
+Error: No model configured for agent 'proPlanner'.
+Please set 'proPlanner.model' in ~/.config/opencode/pro0.json or .opencode/pro0.json
 ```
 
-## Skills System
+## Custom Skills System
 
 ### Auto-Loading
 

@@ -55,45 +55,31 @@ PRO0 has **replaced** oh-my-opencode in this environment. All agent functionalit
 ```json
 {
   "$schema": "https://raw.githubusercontent.com/YOUR_REPO/main/pro0.schema.json",
-  "planner": {
-    "model": "github-copilot/claude-sonnet-4-5",
+  "proPlanner": {
+    "model": "github-copilot/claude-opus-4-5",
     "temperature": 0.7
   },
-  "executor": {
-    "model": "github-copilot/claude-opus-4-5",
+  "proManager": {
+    "model": "github-copilot/claude-sonnet-4-5",
     "temperature": 0.3,
     "max_retry_on_test_failure": 3
   },
-  "specialists": {
-    "styling": {
-      "enabled": true,
-      "model": "github-copilot/gemini-2.0-flash-exp",
-      "temperature": 0.4
-    },
-    "security": {
-      "enabled": true,
-      "model": "github-copilot/claude-sonnet-4-5",
-      "temperature": 0.2
-    },
-    "testing": {
-      "enabled": true,
-      "model": "github-copilot/claude-sonnet-4-5",
-      "temperature": 0.3
-    },
-    "docs": {
-      "enabled": false,
-      "model": "github-copilot/gpt-4o",
-      "temperature": 0.5
-    },
-    "research": {
-      "enabled": true,
-      "model": "github-copilot/claude-sonnet-4-5",
-      "temperature": 0.6
-    }
-  },
   "skills": {
     "auto_load": true,
-    "disabled": []
+    "disabled": [],
+    "qmd": {
+      "enabled": true,
+      "searchMode": "bm25",
+      "minScore": 0.3,
+      "timeout": 30000,
+      "mcp": { "enabled": false }
+    },
+    "deepthink": {
+      "enabled": true,
+      "defaultMode": "auto",
+      "maxIterations": 5,
+      "subAgentModel": "github-copilot/claude-sonnet-4-5"
+    }
   },
   "verification": {
     "run_tests_after_completion": true,
@@ -104,20 +90,73 @@ PRO0 has **replaced** oh-my-opencode in this environment. All agent functionalit
 }
 ```
 
+## MCP Tool Budget Management
+
+OpenCode loads MCP tool schemas for **all enabled tools on every request**. When PRO0 (14 agents + 5 built-in tools) is used alongside multiple MCP servers, this can push requests over the model token limit.
+
+**The Problem**: MCP tool schemas can consume ~80-100K tokens when many servers/tools are enabled (e.g., GitLab 30+ tools, Playwriter 10+, Context7 2, DuckDuckGo 1). Combined with PRO0 agent prompts, this can exceed the 200K context window.
+
+**Solution**: Disable MCP tools globally in `~/.config/opencode/opencode.json`, then re-enable only what you need per project (or per agent).
+
+Tool IDs follow the naming convention `{mcp-server-name}_{tool-name}` (underscore separator), and the `tools` key supports wildcard patterns.
+
+**Global Config Example** (add `tools` at the root of `~/.config/opencode/opencode.json`):
+```json
+{
+  "tools": {
+    "gitlab_*": false,
+    "playwriter_*": false,
+    "context7_*": false,
+    "duckduckgo-search_*": false
+  }
+}
+```
+
+**Per-Project Enable Example** (project-level `opencode.json`):
+```json
+{
+  "tools": {
+    "gitlab_*": true
+  }
+}
+```
+
+**Per-Agent Enable Example** (enable only for specific agents):
+```json
+{
+  "agent": {
+    "proManager": {
+      "tools": {
+        "gitlab_*": true
+      }
+    }
+  }
+}
+```
+
+Note: `tools` supports wildcards (e.g. `gitlab_*`) and OpenCode merges global + per-project config; the project config overrides/extends the global defaults.
+
 ## Available Agents
 
 ### Primary Agents (Tab-switchable)
 
-1. **Planner** - Interview user, research, create execution plans
-2. **Executor** - Execute plans, spawn specialists, run verification
+1. **proPlanner** - Interview user, research, create execution plans
+2. **proManager** - Orchestrate execution by delegating work to specialists
 
 ### Specialist Subagents (@-mentionable)
 
-- **@styling** - UI/UX, CSS, responsive design
-- **@security** - Security reviews, vulnerability checks
-- **@testing** - Unit tests, integration tests, coverage
-- **@docs** - Documentation, README, API docs
-- **@research** - External docs, OSS examples, best practices
+- **@designer** - UI/UX, CSS, component styling/layout
+- **@frontend-coder** - React/Vue logic, state, hooks
+- **@backend-coder** - Business logic, services, algorithms
+- **@database-coder** - Schema design, migrations, query work
+- **@api-coder** - REST/GraphQL endpoints, routing, validation
+- **@tester** - Unit/integration/E2E tests
+- **@security-auditor** - Security review, vulnerabilities
+- **@devops-engineer** - CI/CD, deployment, infra
+- **@documentation-writer** - README, guides, API docs
+- **@document-viewer** - Read/analyze existing docs
+- **@researcher** - External docs, OSS examples
+- **@self-review** - Final quality review
 
 ## Key Differences from oh-my-opencode
 
@@ -154,14 +193,14 @@ Verify `opencode.json` includes PRO0:
 
 PRO0 uses **strict model enforcement**. If you see:
 ```
-Error: No model configured for agent 'planner'
+Error: No model configured for agent 'proPlanner'
 ```
 
 Fix by editing `~/.config/opencode/pro0.json`:
 ```json
 {
-  "planner": {
-    "model": "github-copilot/claude-sonnet-4-5"
+  "proPlanner": {
+    "model": "github-copilot/claude-opus-4-5"
   }
 }
 ```
@@ -172,7 +211,7 @@ Check if enabled in `pro0.json`:
 ```json
 {
   "specialists": {
-    "docs": { "enabled": true, "model": "github-copilot/gpt-4o" }
+    "documentation-writer": { "enabled": true, "model": "github-copilot/gpt-5.2" }
   }
 }
 ```

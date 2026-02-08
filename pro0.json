@@ -1,20 +1,16 @@
 {
   "$schema": "./pro0.schema.json",
-  "proPlanner": {
-    "model": "github-copilot/claude-opus-4-5",
-    "temperature": 0.7,
-    "mandatory_todos": true,
-    "prd_workflow": {
-      "enabled": true,
-      "require_approval": true
-    }
-  },
   "proManager": {
     "model": "github-copilot/claude-sonnet-4-5",
     "temperature": 0.3,
     "max_retry_on_test_failure": 3,
     "coding_allowed": false,
     "mandatory_todos": true,
+    "planning": {
+      "require_approval": true,
+      "auto_prd": true,
+      "prd_directory": ".pro0/prds"
+    },
     "ralph_loop": {
       "enabled": true,
       "max_iterations": 5,
@@ -26,79 +22,147 @@
       }
     }
   },
-  "specialists": {
+  "team": {
+    "maxParallel": 3,
+    "maxTotal": 10,
+    "resourceAware": true,
+    "resourceLimits": {
+      "maxMemoryPercent": 80,
+      "maxCpuPercent": 90
+    },
+    "categories": {
+      "coding": {
+        "name": "Coding",
+        "description": "Implementation, refactoring, bug fixes",
+        "defaultModel": "github-copilot/claude-sonnet-4-5",
+        "defaultTemperature": 0.3,
+        "defaultTools": { "write": true, "edit": true, "bash": true }
+      },
+      "review": {
+        "name": "Review & QA",
+        "description": "Code review, testing, security auditing",
+        "defaultModel": "github-copilot/claude-sonnet-4-5",
+        "defaultTemperature": 0.2,
+        "defaultTools": { "write": true, "edit": true, "bash": true }
+      },
+      "research": {
+        "name": "Research & Analysis",
+        "description": "Documentation reading, web research, codebase exploration",
+        "defaultModel": "github-copilot/claude-haiku-4-5",
+        "defaultTemperature": 0.4,
+        "defaultTools": { "write": false, "edit": false, "bash": false }
+      },
+      "ops": {
+        "name": "Operations",
+        "description": "CI/CD, deployment, infrastructure",
+        "defaultModel": "github-copilot/gpt-5.2",
+        "defaultTemperature": 0.3,
+        "defaultTools": { "write": true, "edit": true, "bash": true }
+      },
+      "design": {
+        "name": "Design & UI",
+        "description": "UI/UX design, styling, layouts, animations",
+        "defaultModel": "github-copilot/gemini-3-pro-preview",
+        "defaultTemperature": 0.7,
+        "defaultTools": { "write": true, "edit": true, "bash": true }
+      }
+    }
+  },
+  "templates": {
     "designer": {
       "enabled": true,
       "model": "github-copilot/gemini-3-pro-preview",
       "temperature": 0.7,
-      "scope": "frontend-components"
+      "scope": "frontend-components",
+      "category": "design"
     },
     "frontend-coder": {
       "enabled": true,
       "model": "github-copilot/gpt-5.2-codex",
-      "temperature": 0.3
+      "temperature": 0.3,
+      "category": "coding"
     },
     "backend-coder": {
       "enabled": true,
       "model": "github-copilot/gpt-5.2-codex",
-      "temperature": 0.3
+      "temperature": 0.3,
+      "category": "coding"
     },
     "database-coder": {
       "enabled": true,
       "model": "github-copilot/claude-sonnet-4-5",
-      "temperature": 0.2
+      "temperature": 0.2,
+      "category": "coding"
     },
     "api-coder": {
       "enabled": true,
       "model": "github-copilot/claude-sonnet-4-5",
-      "temperature": 0.3
+      "temperature": 0.3,
+      "category": "coding"
     },
     "tester": {
       "enabled": true,
       "model": "github-copilot/claude-sonnet-4-5",
-      "temperature": 0.3
+      "temperature": 0.3,
+      "category": "review"
     },
     "security-auditor": {
       "enabled": true,
       "model": "github-copilot/claude-sonnet-4-5",
-      "temperature": 0.2
+      "temperature": 0.2,
+      "category": "review"
     },
     "devops-engineer": {
       "enabled": true,
       "model": "github-copilot/gpt-5.2",
-      "temperature": 0.3
+      "temperature": 0.3,
+      "category": "ops"
     },
     "documentation-writer": {
       "enabled": true,
       "model": "github-copilot/gpt-5.2",
-      "temperature": 0.5
+      "temperature": 0.5,
+      "category": "research"
     },
     "document-viewer": {
       "enabled": true,
       "model": "github-copilot/gemini-3-flash-preview",
-      "temperature": 0.3
+      "temperature": 0.3,
+      "category": "research"
     },
     "researcher": {
       "enabled": true,
       "model": "github-copilot/claude-haiku-4-5",
-      "temperature": 0.4
+      "temperature": 0.4,
+      "category": "research"
     },
     "self-review": {
       "enabled": true,
       "model": "github-copilot/gpt-5.2-codex",
-      "temperature": 0.75
+      "temperature": 0.75,
+      "category": "review"
     }
-  },
-  "background_tasks": {
-    "enabled": true,
-    "auto_parallel_threshold": 2,
-    "max_concurrent_per_provider": 5,
-    "max_concurrent_total": 10,
-    "cleanup_after_ms": 3600000
   },
   "skills": {
     "auto_load": true,
-    "disabled": []
+    "disabled": [],
+    "qmd": {
+      "enabled": true,
+      "searchMode": "bm25",
+      "minScore": 0.3,
+      "timeout": 30000,
+      "mcp": {
+        "enabled": false,
+        "command": "",
+        "args": []
+      }
+    },
+    "deepthink": {
+      "enabled": true,
+      "defaultMode": "auto",
+      "maxIterations": 5,
+      "subAgentModel": "github-copilot/claude-sonnet-4-5"
+    }
   },
   "verification": {
     "run_tests_after_completion": true,

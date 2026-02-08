@@ -2,82 +2,15 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "title": "PRO0 Configuration",
-  "description": "Configuration file for PRO0 agent harness",
+  "description": "Configuration for PRO0 team-based dynamic agent system. proManager is the sole primary agent (team leader) that plans and delegates to dynamically spawned agents organized by category.",
   "properties": {
     "$schema": {
       "type": "string",
       "description": "JSON Schema reference"
     },
-    "proPlanner": {
-      "type": "object",
-      "description": "Planner agent configuration",
-      "properties": {
-        "model": {
-          "type": "string",
-          "description": "Model to use for Planner agent (e.g., 'github-copilot/claude-sonnet-4-5')"
-        },
-        "temperature": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 2,
-          "description": "Temperature for model sampling (0-2)"
-        },
-        "top_p": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "description": "Top-p (nucleus sampling) parameter"
-        }
-      },
-      "required": ["model"]
-    },
-    "proPlanner": {
-      "type": "object",
-      "description": "Planner agent configuration",
-      "properties": {
-        "model": {
-          "type": "string",
-          "description": "Model to use for Planner agent (e.g., 'github-copilot/claude-opus-4-5')"
-        },
-        "temperature": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 2,
-          "description": "Temperature for model sampling (0-2)"
-        },
-        "top_p": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "description": "Top-p (nucleus sampling) parameter"
-        },
-        "mandatory_todos": {
-          "type": "boolean",
-          "default": true,
-          "description": "Require TodoWrite tool usage for planning tasks"
-        },
-        "prd_workflow": {
-          "type": "object",
-          "description": "PRD (Product Requirements Document) workflow configuration",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "default": true,
-              "description": "Enable two-phase PRD workflow (PRD → Plan)"
-            },
-            "require_approval": {
-              "type": "boolean",
-              "default": true,
-              "description": "Require user approval between PRD and execution plan"
-            }
-          }
-        }
-      },
-      "required": ["model"]
-    },
     "proManager": {
       "type": "object",
-      "description": "Manager agent configuration (pure orchestration, no coding)",
+      "description": "Manager agent configuration — the sole primary agent that plans first, then delegates execution to team agents",
       "properties": {
         "model": {
           "type": "string",
@@ -104,7 +37,7 @@
         "coding_allowed": {
           "type": "boolean",
           "default": false,
-          "description": "Whether Manager is allowed to write code (should be false for pure delegation)"
+          "description": "Whether Manager is allowed to write code directly (should be false for pure delegation)"
         },
         "mandatory_todos": {
           "type": "boolean",
@@ -113,7 +46,7 @@
         },
         "ralph_loop": {
           "type": "object",
-          "description": "Ralph loop configuration for iterative task execution",
+          "description": "Ralph loop configuration for iterative task execution with self-review",
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -139,7 +72,7 @@
                 "enabled": {
                   "type": "boolean",
                   "default": true,
-                  "description": "Ask user for continuation when max iterations reached with incomplete tasks"
+                  "description": "Allow continuation when max iterations reached with incomplete tasks"
                 },
                 "ask_user_at_max": {
                   "type": "boolean",
@@ -153,267 +86,101 @@
                   "default": 5,
                   "description": "Default number of additional iterations to offer"
                 }
-              }
+              },
+              "additionalProperties": false
             }
+          },
+          "additionalProperties": false
+        },
+        "planning": {
+          "type": "object",
+          "description": "Planning phase configuration (PRD workflow merged from old proPlanner)",
+          "properties": {
+            "require_approval": {
+              "type": "boolean",
+              "default": true,
+              "description": "Require user approval between PRD creation and execution"
+            },
+            "auto_prd": {
+              "type": "boolean",
+              "default": true,
+              "description": "Auto-create PRD for complex tasks (3+ subtasks)"
+            },
+            "prd_directory": {
+              "type": "string",
+              "default": ".pro0/prds",
+              "description": "Directory for PRDs (relative to project root)"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["model"],
+      "additionalProperties": false
+    },
+    "team": {
+      "type": "object",
+      "description": "Team configuration — controls dynamic agent spawning, concurrency, and resource-aware throttling",
+      "properties": {
+        "maxParallel": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 3,
+          "description": "Maximum agents running simultaneously"
+        },
+        "maxTotal": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 10,
+          "description": "Maximum agents that can be spawned per task"
+        },
+        "resourceAware": {
+          "type": "boolean",
+          "default": true,
+          "description": "Adjust concurrency limits based on system CPU/memory usage"
+        },
+        "resourceLimits": {
+          "type": "object",
+          "description": "Resource thresholds for throttling agent spawning",
+          "properties": {
+            "maxMemoryPercent": {
+              "type": "number",
+              "minimum": 10,
+              "maximum": 100,
+              "default": 80,
+              "description": "Throttle if memory usage exceeds this percent"
+            },
+            "maxCpuPercent": {
+              "type": "number",
+              "minimum": 10,
+              "maximum": 100,
+              "default": 90,
+              "description": "Throttle if CPU usage exceeds this percent"
+            }
+          },
+          "additionalProperties": false
+        },
+        "categories": {
+          "type": "object",
+          "description": "Agent categories with default models. Built-in categories: coding, review, research, ops, design. Custom categories can be added.",
+          "additionalProperties": {
+            "$ref": "#/$defs/agentCategory"
           }
         }
       },
-      "required": ["model"]
+      "required": ["maxParallel", "maxTotal", "resourceAware", "categories"],
+      "additionalProperties": false
     },
-    "specialists": {
+    "templates": {
       "type": "object",
-      "description": "Specialist subagent configurations",
-      "properties": {
-        "designer": {
-          "type": "object",
-          "description": "Designer specialist (Frontend components, CSS, styling, layouts)",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "Enable this specialist"
-            },
-            "model": {
-              "type": "string",
-              "description": "Model to use for this specialist"
-            },
-            "temperature": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 2
-            },
-            "scope": {
-              "type": "string",
-              "enum": ["visual-only", "frontend-components"],
-              "description": "Designer scope: visual-only (CSS) or frontend-components (includes structure)"
-            }
-          },
-          "required": ["enabled", "model"]
-        },
-        "frontend-coder": {
-          "type": "object",
-          "description": "Frontend Coder specialist (React/Vue logic, state management, hooks)",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "Enable this specialist"
-            },
-            "model": {
-              "type": "string",
-              "description": "Model to use for this specialist"
-            },
-            "temperature": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 2
-            }
-          },
-          "required": ["enabled", "model"]
-        },
-        "backend-coder": {
-          "type": "object",
-          "description": "Backend Coder specialist (Business logic, services, controllers)",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "Enable this specialist"
-            },
-            "model": {
-              "type": "string",
-              "description": "Model to use for this specialist"
-            },
-            "temperature": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 2
-            }
-          },
-          "required": ["enabled", "model"]
-        },
-        "database-coder": {
-          "type": "object",
-          "description": "Database Coder specialist (Schema design, queries, migrations)",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "Enable this specialist"
-            },
-            "model": {
-              "type": "string",
-              "description": "Model to use for this specialist"
-            },
-            "temperature": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 2
-            }
-          },
-          "required": ["enabled", "model"]
-        },
-        "api-coder": {
-          "type": "object",
-          "description": "API Coder specialist (REST/GraphQL endpoints, routing)",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "Enable this specialist"
-            },
-            "model": {
-              "type": "string",
-              "description": "Model to use for this specialist"
-            },
-            "temperature": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 2
-            }
-          },
-          "required": ["enabled", "model"]
-        },
-        "tester": {
-          "type": "object",
-          "description": "Tester specialist (Unit/integration/E2E tests)",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "Enable this specialist"
-            },
-            "model": {
-              "type": "string",
-              "description": "Model to use for this specialist"
-            },
-            "temperature": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 2
-            }
-          },
-          "required": ["enabled", "model"]
-        },
-        "security-auditor": {
-          "type": "object",
-          "description": "Security Auditor specialist (Vulnerability checks, security review)",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "Enable this specialist"
-            },
-            "model": {
-              "type": "string",
-              "description": "Model to use for this specialist"
-            },
-            "temperature": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 2
-            }
-          },
-          "required": ["enabled", "model"]
-        },
-        "devops-engineer": {
-          "type": "object",
-          "description": "DevOps Engineer specialist (CI/CD, deployment, infrastructure)",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "Enable this specialist"
-            },
-            "model": {
-              "type": "string",
-              "description": "Model to use for this specialist"
-            },
-            "temperature": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 2
-            }
-          },
-          "required": ["enabled", "model"]
-        },
-        "documentation-writer": {
-          "type": "object",
-          "description": "Documentation Writer specialist (Create/update docs, README, guides)",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "Enable this specialist"
-            },
-            "model": {
-              "type": "string",
-              "description": "Model to use for this specialist"
-            },
-            "temperature": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 2
-            }
-          },
-          "required": ["enabled", "model"]
-        },
-        "document-viewer": {
-          "type": "object",
-          "description": "Document Viewer specialist (Read/analyze documentation, extract information)",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "Enable this specialist"
-            },
-            "model": {
-              "type": "string",
-              "description": "Model to use for this specialist"
-            },
-            "temperature": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 2
-            }
-          },
-          "required": ["enabled", "model"]
-        },
-        "researcher": {
-          "type": "object",
-          "description": "Researcher specialist (External docs, OSS examples, web search)",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "Enable this specialist"
-            },
-            "model": {
-              "type": "string",
-              "description": "Model to use for this specialist"
-            },
-            "temperature": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 2
-            }
-          },
-          "required": ["enabled", "model"]
-        },
-        "self-review": {
-          "type": "object",
-          "description": "Self-review specialist (Comprehensive review after task completion)",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "Enable this specialist"
-            },
-            "model": {
-              "type": "string",
-              "description": "Model to use for this specialist"
-            },
-            "temperature": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 2
-            }
-          },
-          "required": ["enabled", "model"]
-        }
+      "description": "Template agents (evolved from old specialists). The manager can use these as starting points when spawning agents. Keys are template names (e.g., 'designer', 'backend-coder').",
+      "additionalProperties": {
+        "$ref": "#/$defs/templateConfig"
       }
     },
     "skills": {
       "type": "object",
-      "description": "Skills configuration",
+      "description": "Skills configuration — controls bundled skill behavior (QMD, DeepThink)",
       "properties": {
         "auto_load": {
           "type": "boolean",
@@ -426,12 +193,100 @@
             "type": "string"
           },
           "description": "List of skill names to exclude from auto-loading"
+        },
+        "qmd": {
+          "type": "object",
+          "description": "QMD (Query Markdown Documentation) skill configuration",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable QMD skill"
+            },
+            "searchMode": {
+              "type": "string",
+              "enum": ["bm25", "semantic", "hybrid"],
+              "default": "bm25",
+              "description": "Search algorithm for documentation queries"
+            },
+            "minScore": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.3,
+              "description": "Minimum relevance score threshold for results"
+            },
+            "timeout": {
+              "type": "integer",
+              "minimum": 1000,
+              "default": 30000,
+              "description": "Timeout for QMD queries in milliseconds"
+            },
+            "mcp": {
+              "type": "object",
+              "description": "MCP server configuration for QMD",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Enable MCP server for QMD"
+                },
+                "command": {
+                  "type": "string",
+                  "description": "Command to start the MCP server"
+                },
+                "args": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Arguments for the MCP server command"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "deepthink": {
+          "type": "object",
+          "description": "DeepThink skill configuration for complex reasoning tasks",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable DeepThink skill"
+            },
+            "defaultMode": {
+              "type": "string",
+              "enum": ["full", "quick", "auto"],
+              "default": "auto",
+              "description": "Default thinking mode"
+            },
+            "maxIterations": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 5,
+              "description": "Maximum reasoning iterations"
+            },
+            "subAgentModel": {
+              "type": "string",
+              "description": "Model for the DeepThink sub-agent"
+            },
+            "timeout": {
+              "type": "integer",
+              "minimum": 1000,
+              "description": "Timeout for DeepThink in milliseconds"
+            }
+          },
+          "additionalProperties": false
         }
-      }
+      },
+      "additionalProperties": false
     },
     "verification": {
       "type": "object",
-      "description": "Verification and testing configuration",
+      "description": "Verification and testing configuration — run after task completion",
       "properties": {
         "run_tests_after_completion": {
           "type": "boolean",
@@ -453,46 +308,100 @@
           "default": true,
           "description": "Ensure unchanged functions still pass tests"
         }
-      }
+      },
+      "additionalProperties": false
+    },
+    "proPlanner": {
+      "type": "object",
+      "description": "DEPRECATED — Legacy v0.2 planner config. Auto-migrated to proManager.planning on load.",
+      "deprecated": true
+    },
+    "specialists": {
+      "type": "object",
+      "description": "DEPRECATED — Legacy v0.2 specialists config. Auto-migrated to templates on load.",
+      "deprecated": true
     },
     "background_tasks": {
       "type": "object",
-      "description": "Background task execution configuration",
+      "description": "DEPRECATED — Legacy v0.2 background tasks config. Auto-migrated to team limits on load.",
+      "deprecated": true
+    }
+  },
+  "required": ["proManager"],
+  "additionalProperties": false,
+  "$defs": {
+    "agentCategory": {
+      "type": "object",
+      "description": "An agent category defining a role with default model and behavior",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable category name"
+        },
+        "description": {
+          "type": "string",
+          "description": "What this category is for"
+        },
+        "defaultModel": {
+          "type": "string",
+          "description": "Default model for agents in this category"
+        },
+        "defaultTemperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Default temperature for agents in this category"
+        },
+        "defaultTools": {
+          "type": "object",
+          "description": "Default tool permissions (e.g., { \"write\": true, \"edit\": true, \"bash\": true })",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
+        "basePromptTemplate": {
+          "type": "string",
+          "description": "Path to base prompt template (relative to agents/ or .pro0/agents/)"
+        }
+      },
+      "required": ["name", "description", "defaultModel"],
+      "additionalProperties": false
+    },
+    "templateConfig": {
+      "type": "object",
+      "description": "A template agent configuration (evolved from old specialists)",
       "properties": {
         "enabled": {
           "type": "boolean",
-          "default": true,
-          "description": "Enable background task execution"
+          "description": "Enable this template agent"
         },
-        "auto_parallel_threshold": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 10,
-          "default": 2,
-          "description": "Automatically run tasks in parallel when N or more independent specialists are spawned"
+        "model": {
+          "type": "string",
+          "description": "Model override for this template (falls back to category default)"
         },
-        "max_concurrent_per_provider": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 20,
-          "default": 5,
-          "description": "Maximum concurrent background tasks per model provider"
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Temperature override"
         },
-        "max_concurrent_total": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 50,
-          "default": 10,
-          "description": "Maximum total concurrent background tasks across all providers"
+        "top_p": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Top-p override"
         },
-        "cleanup_after_ms": {
-          "type": "integer",
-          "minimum": 60000,
-          "default": 3600000,
-          "description": "Auto-cleanup completed tasks older than this duration (milliseconds, minimum 1 minute)"
+        "scope": {
+          "type": "string",
+          "description": "Scope modifier (e.g., 'frontend-components' for designer)"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category this template belongs to (e.g., 'coding', 'review', 'research', 'ops', 'design')"
         }
-      }
+      },
+      "required": ["enabled"],
+      "additionalProperties": false
     }
-  },
-  "required": ["proPlanner", "proManager"]
+  }
 }

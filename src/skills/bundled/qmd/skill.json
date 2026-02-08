@@ -1,0 +1,8 @@
+{
+  "name": "qmd",
+  "version": "1.0.0",
+  "description": "Search local markdown knowledge base using QMD",
+  "author": "PRO0",
+  "homepage": "https://github.com/tobi/qmd",
+  "prompts": ["qmd-skill.md"]
+}
