@@ -52,7 +52,7 @@ const DEFAULT_CONFIG: Pro0Config = {
       coding: {
         name: 'Coding',
         description: 'Implementation, refactoring, bug fixes',
-        defaultModel: 'github-copilot/claude-sonnet-4-5',
+        defaultModel: 'github-copilot/gpt-5.3-codex',
         defaultTemperature: 0.3,
         defaultTools: { write: true, edit: true, bash: true },
       },
@@ -73,7 +73,7 @@ const DEFAULT_CONFIG: Pro0Config = {
       ops: {
         name: 'Operations',
         description: 'CI/CD, deployment, infrastructure',
-        defaultModel: 'github-copilot/gpt-5.2',
+        defaultModel: 'github-copilot/gpt-5.3-codex',
         defaultTemperature: 0.3,
         defaultTools: { write: true, edit: true, bash: true },
       },
@@ -97,25 +97,25 @@ const DEFAULT_CONFIG: Pro0Config = {
     },
     'frontend-coder': {
       enabled: true,
-      model: 'github-copilot/gpt-5.2-codex',
+      model: 'github-copilot/gpt-5.3-codex',
       temperature: 0.3,
       category: 'coding',
     },
     'backend-coder': {
       enabled: true,
-      model: 'github-copilot/gpt-5.2-codex',
+      model: 'github-copilot/gpt-5.3-codex',
       temperature: 0.3,
       category: 'coding',
     },
     'database-coder': {
       enabled: true,
-      model: 'github-copilot/claude-sonnet-4-5',
+      model: 'github-copilot/gpt-5.3-codex',
       temperature: 0.2,
       category: 'coding',
     },
     'api-coder': {
       enabled: true,
-      model: 'github-copilot/claude-sonnet-4-5',
+      model: 'github-copilot/gpt-5.3-codex',
       temperature: 0.3,
       category: 'coding',
     },
@@ -133,13 +133,13 @@ const DEFAULT_CONFIG: Pro0Config = {
     },
     'devops-engineer': {
       enabled: true,
-      model: 'github-copilot/gpt-5.2',
+      model: 'github-copilot/gpt-5.3-codex',
       temperature: 0.3,
       category: 'ops',
     },
     'documentation-writer': {
       enabled: true,
-      model: 'github-copilot/gpt-5.2',
+      model: 'github-copilot/claude-sonnet-4-5',
       temperature: 0.5,
       category: 'research',
     },
@@ -157,7 +157,7 @@ const DEFAULT_CONFIG: Pro0Config = {
     },
     'self-review': {
       enabled: true,
-      model: 'github-copilot/gpt-5.2-codex',
+      model: 'github-copilot/claude-sonnet-4-5',
       temperature: 0.75,
       category: 'review',
     },
