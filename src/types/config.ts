@@ -67,7 +67,7 @@ export interface AgentCategory {
   defaultTemperature?: number;
   /** Default tool permissions */
   defaultTools?: Record<string, boolean>;
-  /** Path to base prompt template (relative to agents/ or .pro0/agents/) */
+  /** Path to base prompt template (relative to prompts/ or .pro0/agents/) */
   basePromptTemplate?: string;
 }
 

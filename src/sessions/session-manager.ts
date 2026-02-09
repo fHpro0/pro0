@@ -60,6 +60,8 @@ export interface TaskSession {
   error?: string;
   /** Category of the agent */
   category: string;
+  /** Linked manager todo id (if provided) */
+  todoId?: string;
 }
 
 export interface SpawnResult {
@@ -367,6 +369,16 @@ export class SessionManager {
    */
   getSession(taskId: string): TaskSession | undefined {
     return this.taskSessions.get(taskId);
+  }
+
+  /**
+   * Link a manager todo item to a spawned task session.
+   */
+  linkTodo(taskId: string, todoId: string): boolean {
+    const session = this.taskSessions.get(taskId);
+    if (!session) return false;
+    session.todoId = todoId;
+    return true;
   }
 
   // -------------------------------------------------------------------------

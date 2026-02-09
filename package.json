@@ -16,7 +16,7 @@
   },
   "scripts": {
     "prebuild": "npm run clean",
-    "build": "tsc && npm run copy-assets && rm -rf dist/agents && cp -r agents dist/",
+    "build": "tsc && npm run copy-assets && cp -r prompts dist/",
     "build:watch": "tsc --watch",
     "typecheck": "tsc --noEmit",
     "copy-assets": "mkdir -p dist/skills/bundled/qmd dist/skills/bundled/deepthink && cp src/skills/bundled/qmd/skill.json src/skills/bundled/qmd/*.md dist/skills/bundled/qmd/ && cp src/skills/bundled/deepthink/skill.json src/skills/bundled/deepthink/*.md dist/skills/bundled/deepthink/",
@@ -41,7 +41,7 @@
   ],
   "files": [
     "dist",
-    "agents",
+    "prompts",
     "pro0.schema.json",
     "README.md",
     "LICENSE"

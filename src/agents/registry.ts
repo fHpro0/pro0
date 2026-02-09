@@ -2,7 +2,7 @@
  * Dynamic Agent Registry
  *
  * Central registry for all agents (templates + dynamically generated).
- * Templates are loaded from agents/*.md, dynamic agents from .pro0/agents/.
+ * Templates are loaded from prompts/*.md, dynamic agents from .pro0/agents/.
  * The manager calls into this to create, update, list, and track agents.
  */
 
@@ -27,7 +27,7 @@ export interface AgentTemplate {
   category: string;
   model: string;
   temperature?: number;
-  promptFile: string; // relative to agents/ dir
+  promptFile: string; // relative to prompts/ dir
   enabled: boolean;
 }
 
@@ -56,7 +56,7 @@ let totalSpawnedCount = 0;
 // ---------------------------------------------------------------------------
 
 /**
- * Load template agents from agents/*.md files.
+ * Load template agents from prompts/*.md files.
  * Reads frontmatter to extract metadata. Falls back to template config for
  * properties not in frontmatter.
  */
@@ -65,7 +65,7 @@ export function loadTemplates(
   templatesConfig: Record<string, TemplateConfig>
 ): Map<string, AgentTemplate> {
   const templates = new Map<string, AgentTemplate>();
-  const specialistsDir = path.join(pluginDir, 'agents', 'specialists');
+  const specialistsDir = path.join(pluginDir, 'prompts', 'specialists');
 
   if (!fs.existsSync(specialistsDir)) {
     return templates;

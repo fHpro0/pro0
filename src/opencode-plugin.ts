@@ -95,7 +95,7 @@ async function pro0Plugin(context: any): Promise<any> {
   console.log('[PRO0] Registering proManager as sole primary agent + template subagents');
 
   const readAgentPrompt = async (fileName: string): Promise<string> => {
-    const fullPath = path.join(pluginDir, 'agents', fileName);
+    const fullPath = path.join(pluginDir, 'prompts', fileName);
     let raw = await readFile(fullPath, 'utf-8');
 
     // Strip frontmatter
@@ -110,11 +110,11 @@ async function pro0Plugin(context: any): Promise<any> {
     if (!sharedTemplates) {
       sharedTemplates = {
         securityWarning: await readFile(
-          path.join(pluginDir, 'agents', '_shared', 'security-warning.md'),
+           path.join(pluginDir, 'prompts', '_shared', 'security-warning.md'),
           'utf-8'
         ),
         todowriteTemplate: await readFile(
-          path.join(pluginDir, 'agents', '_shared', 'todowrite-template.md'),
+           path.join(pluginDir, 'prompts', '_shared', 'todowrite-template.md'),
           'utf-8'
         ),
       };
@@ -305,12 +305,18 @@ async function pro0Plugin(context: any): Promise<any> {
 
       spawn_agent: {
         description:
-          'Spawn a created agent (starts its session and sends it the task). The agent must have been created with create_agent first.',
+          'Spawn a created agent (starts its session and sends it the task). The agent must have been created with create_agent first. Optionally link a todo_id so completion can be mapped back to TodoWrite.',
         parameters: {
           agent_id: {
             type: 'string',
             description: 'Agent ID returned by create_agent',
             required: true,
+          },
+          todo_id: {
+            type: 'string',
+            description:
+              'Optional TodoWrite item ID this agent is responsible for (recommended)',
+            required: false,
           },
         },
         execute: async (params: any) => {
@@ -342,13 +348,20 @@ async function pro0Plugin(context: any): Promise<any> {
             };
           }
 
+          if (params.todo_id) {
+            sessionManager.linkTodo(result.taskSession!.taskId, params.todo_id);
+          }
+
           return {
             task_id: result.taskSession!.taskId,
             agent_id: params.agent_id,
             agent_name: agent.name,
             session_id: result.taskSession!.sessionId,
             status: result.taskSession!.status,
-            message: `Agent "${agent.name}" spawned and running. Use check_agent({ task_id: "${result.taskSession!.taskId}" }) to monitor.`,
+            ...(params.todo_id ? { todo_id: params.todo_id } : {}),
+            message: params.todo_id
+              ? `Agent "${agent.name}" spawned for todo ${params.todo_id}. Use check_agent({ task_id: "${result.taskSession!.taskId}" }) and update TodoWrite when done.`
+              : `Agent "${agent.name}" spawned and running. Use check_agent({ task_id: "${result.taskSession!.taskId}" }) to monitor.`,
           };
         },
       },
@@ -460,6 +473,10 @@ async function pro0Plugin(context: any): Promise<any> {
             started_at: session.startedAt,
           };
 
+          if (session.todoId) {
+            result.todo_id = session.todoId;
+          }
+
           if (session.completedAt) {
             result.completed_at = session.completedAt;
           }
@@ -471,6 +488,16 @@ async function pro0Plugin(context: any): Promise<any> {
           }
           if (session.error) {
             result.error = session.error;
+          }
+
+          if (session.todoId && session.status === 'completed') {
+            result.todo_update_hint = `Mark todo ${session.todoId} as completed via TodoWrite now.`;
+          }
+          if (
+            session.todoId &&
+            (session.status === 'error' || session.status === 'aborted')
+          ) {
+            result.todo_update_hint = `Update todo ${session.todoId} status to in_progress or cancelled via TodoWrite, then retry or reassign.`;
           }
 
           if (params.include_output) {

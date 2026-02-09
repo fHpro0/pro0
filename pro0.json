@@ -1,7 +1,7 @@
 {
   "$schema": "./pro0.schema.json",
   "proManager": {
-    "model": "github-copilot/claude-sonnet-4-5",
+    "model": "github-copilot/claude-sonnet-4.5",
     "temperature": 0.3,
     "max_retry_on_test_failure": 3,
     "coding_allowed": false,
@@ -34,28 +34,28 @@
       "coding": {
         "name": "Coding",
         "description": "Implementation, refactoring, bug fixes",
-        "defaultModel": "github-copilot/gpt-5.3-codex",
+        "defaultModel": "openai/gpt-5.3-codex",
         "defaultTemperature": 0.3,
         "defaultTools": { "write": true, "edit": true, "bash": true }
       },
       "review": {
         "name": "Review & QA",
         "description": "Code review, testing, security auditing",
-        "defaultModel": "github-copilot/claude-sonnet-4-5",
+        "defaultModel": "github-copilot/claude-sonnet-4.5",
         "defaultTemperature": 0.2,
         "defaultTools": { "write": true, "edit": true, "bash": true }
       },
       "research": {
         "name": "Research & Analysis",
         "description": "Documentation reading, web research, codebase exploration",
-        "defaultModel": "github-copilot/claude-haiku-4-5",
+        "defaultModel": "github-copilot/claude-haiku-4.5",
         "defaultTemperature": 0.4,
         "defaultTools": { "write": false, "edit": false, "bash": false }
       },
       "ops": {
         "name": "Operations",
         "description": "CI/CD, deployment, infrastructure",
-        "defaultModel": "github-copilot/gpt-5.3-codex",
+        "defaultModel": "openai/gpt-5.3-codex",
         "defaultTemperature": 0.3,
         "defaultTools": { "write": true, "edit": true, "bash": true }
       },
@@ -78,49 +78,49 @@
     },
     "frontend-coder": {
       "enabled": true,
-      "model": "github-copilot/gpt-5.3-codex",
+      "model": "openai/gpt-5.3-codex",
       "temperature": 0.3,
       "category": "coding"
     },
     "backend-coder": {
       "enabled": true,
-      "model": "github-copilot/gpt-5.3-codex",
+      "model": "openai/gpt-5.3-codex",
       "temperature": 0.3,
       "category": "coding"
     },
     "database-coder": {
       "enabled": true,
-      "model": "github-copilot/gpt-5.3-codex",
+      "model": "openai/gpt-5.3-codex",
       "temperature": 0.2,
       "category": "coding"
     },
     "api-coder": {
       "enabled": true,
-      "model": "github-copilot/gpt-5.3-codex",
+      "model": "openai/gpt-5.3-codex",
       "temperature": 0.3,
       "category": "coding"
     },
     "tester": {
       "enabled": true,
-      "model": "github-copilot/claude-sonnet-4-5",
+      "model": "github-copilot/claude-sonnet-4.5",
       "temperature": 0.3,
       "category": "review"
     },
     "security-auditor": {
       "enabled": true,
-      "model": "github-copilot/claude-sonnet-4-5",
+      "model": "github-copilot/claude-sonnet-4.5",
       "temperature": 0.2,
       "category": "review"
     },
     "devops-engineer": {
       "enabled": true,
-      "model": "github-copilot/gpt-5.3-codex",
+      "model": "openai/gpt-5.3-codex",
       "temperature": 0.3,
       "category": "ops"
     },
     "documentation-writer": {
       "enabled": true,
-      "model": "github-copilot/claude-sonnet-4-5",
+      "model": "github-copilot/claude-sonnet-4.5",
       "temperature": 0.5,
       "category": "research"
     },
@@ -132,13 +132,13 @@
     },
     "researcher": {
       "enabled": true,
-      "model": "github-copilot/claude-haiku-4-5",
+      "model": "github-copilot/claude-haiku-4.5",
       "temperature": 0.4,
       "category": "research"
     },
     "self-review": {
       "enabled": true,
-      "model": "github-copilot/claude-sonnet-4-5",
+      "model": "github-copilot/claude-sonnet-4.5",
       "temperature": 0.75,
       "category": "review"
     }
@@ -161,7 +161,7 @@
       "enabled": true,
       "defaultMode": "auto",
       "maxIterations": 5,
-      "subAgentModel": "github-copilot/claude-sonnet-4-5"
+      "subAgentModel": "github-copilot/claude-sonnet-4.5"
     }
   },
   "verification": {
