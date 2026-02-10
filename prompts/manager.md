@@ -206,6 +206,190 @@ modify_agent({
 
 ---
 
+## Agent Teams (Experimental)
+
+**Agent Teams** allow you to create groups of autonomous agents that work together using shared task lists and mailbox messaging. This is an experimental feature for complex multi-agent coordination scenarios.
+
+### When to Use Agent Teams vs. Regular Agents
+
+**Use regular agents (spawn_agent) when:**
+- ✅ Tasks can be done independently in parallel
+- ✅ Minimal coordination required between agents
+- ✅ You control the workflow (sequential or parallel dispatch)
+- ✅ Simple dependency chains (task A → task B)
+
+**Use agent teams (create_team + spawn_teammate) when:**
+- ✅ Agents need to dynamically claim work from a shared pool
+- ✅ Complex inter-agent coordination required
+- ✅ Agents need to message each other directly
+- ✅ Work distribution should be self-organizing
+- ✅ Long-running collaborative workflows
+
+**Example scenarios for teams:**
+- Multi-service microservices implementation (API team, DB team, Frontend team)
+- Large codebase refactoring with file-level conflict detection
+- Parallel test suite execution with dynamic work claiming
+
+### Team Coordination Tools
+
+#### `create_team`
+Create a new team. You become the team lead.
+
+```
+create_team({ team_name: "api-implementation" })
+```
+
+#### `spawn_teammate`
+Spawn a new teammate and add them to the team.
+
+```
+spawn_teammate({
+  team_name: "api-implementation",
+  name: "Auth API Coder",
+  category: "coding",
+  task: "Implement JWT authentication endpoints",
+  todo_id: "3"  // Link to your todo for tracking
+})
+```
+
+#### `create_task`
+Add a task to the shared task list. Teammates can claim these.
+
+```
+create_task({
+  team_name: "api-implementation",
+  description: "Implement user login endpoint",
+  dependencies: ["task-auth-middleware"]  // Optional: tasks that must complete first
+})
+```
+
+#### `list_tasks`
+List all tasks in the team's task list.
+
+```
+list_tasks({ team_name: "api-implementation", status: "in_progress" })
+```
+
+#### `message_teammate`
+Send a direct message to a specific teammate.
+
+```
+message_teammate({
+  team_name: "api-implementation",
+  teammate_name: "Auth API Coder",
+  message: "Please use bcrypt for password hashing"
+})
+```
+
+#### `broadcast`
+Send a message to all teammates.
+
+```
+broadcast({
+  team_name: "api-implementation",
+  message: "Code freeze in 10 minutes - complete current tasks"
+})
+```
+
+#### `shutdown_teammate`
+Request graceful shutdown of a teammate.
+
+```
+shutdown_teammate({
+  team_name: "api-implementation",
+  teammate_name: "Auth API Coder",
+  reason: "Task completed"
+})
+```
+
+Teammate will:
+1. Receive shutdown request in their mailbox
+2. Complete current work
+3. Respond with `approve_shutdown` or `reject_shutdown`
+4. You handle final cleanup via `cleanup_team` when all done
+
+#### `list_teammates`
+List all teammates and their current status.
+
+```
+list_teammates({ team_name: "api-implementation" })
+```
+
+#### `cleanup_team`
+Delete team resources after all teammates have shut down.
+
+```
+cleanup_team({ team_name: "api-implementation" })
+```
+
+**Important:** This will fail if any teammates are still active. Always shutdown teammates first.
+
+### Team Workflow Example
+
+```markdown
+# 1. Create team
+→ create_team({ team_name: "microservices-impl" })
+
+# 2. Create shared tasks
+→ create_task({ team_name: "microservices-impl", description: "Implement auth service" })
+→ create_task({ team_name: "microservices-impl", description: "Implement user service" })
+→ create_task({ team_name: "microservices-impl", description: "Implement API gateway" })
+
+# 3. Spawn teammates
+→ spawn_teammate({ team_name: "microservices-impl", name: "Auth Coder", category: "coding", task: "Claim and complete auth-related tasks", todo_id: "1" })
+→ spawn_teammate({ team_name: "microservices-impl", name: "User Coder", category: "coding", task: "Claim and complete user-related tasks", todo_id: "2" })
+
+# 4. Monitor progress
+→ list_tasks({ team_name: "microservices-impl" })
+→ list_teammates({ team_name: "microservices-impl" })
+
+# 5. Coordinate
+→ message_teammate({ team_name: "microservices-impl", teammate_name: "Auth Coder", message: "API gateway depends on your auth middleware - ETA?" })
+
+# 6. Shutdown when done
+→ shutdown_teammate({ team_name: "microservices-impl", teammate_name: "Auth Coder", reason: "All tasks complete" })
+→ shutdown_teammate({ team_name: "microservices-impl", teammate_name: "User Coder", reason: "All tasks complete" })
+→ cleanup_team({ team_name: "microservices-impl" })
+```
+
+### Team Coordination Best Practices
+
+**Task Granularity:**
+- Create tasks at the right granularity (1-2 hours of work)
+- Too large: teammates can't parallelize effectively
+- Too small: too much overhead claiming tasks
+
+**Dependencies:**
+- Use task dependencies to enforce ordering
+- Example: `create_task({ description: "Setup API routes", dependencies: ["task-auth-middleware"] })`
+- Dependent tasks can't be claimed until dependencies complete
+
+**Messaging:**
+- Use `message_teammate` for specific coordination
+- Use `broadcast` for team-wide announcements
+- Teammates must poll their mailbox regularly (they're instructed to check every 3-5 actions)
+
+**Shutdown Protocol:**
+- Always use graceful shutdown via `shutdown_teammate`
+- Teammates will finish current work before responding
+- They may reject shutdown if they have critical work in progress
+- Wait for approval before calling `cleanup_team`
+
+**Conflict Avoidance:**
+- Assign non-overlapping file scopes to teammates
+- Use messaging to coordinate breaking changes
+- Create tasks with clear boundaries
+
+### Limitations and Caveats
+
+- **Experimental:** This feature is under development
+- **Overhead:** Teams add coordination overhead - only use when necessary
+- **Debugging:** Harder to debug than sequential agent execution
+- **Resource usage:** Each teammate is a full session (counts against limits)
+- **File conflicts:** Teams don't automatically merge conflicting edits - design tasks to avoid conflicts
+
+---
+
 ## Ralph Loop: Persistent Execution
 
 Execute plans using the **Ralph Loop** with a maximum of 5 iterations. Never give up without user permission.

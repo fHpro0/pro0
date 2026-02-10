@@ -52,7 +52,7 @@ const DEFAULT_CONFIG: Pro0Config = {
       coding: {
         name: 'Coding',
         description: 'Implementation, refactoring, bug fixes',
-        defaultModel: 'openai/gpt-5.3-codex',
+        defaultModel: 'github-copilot/gpt-5.2-codex',
         defaultTemperature: 0.3,
         defaultTools: { write: true, edit: true, bash: true },
       },
@@ -73,7 +73,7 @@ const DEFAULT_CONFIG: Pro0Config = {
       ops: {
         name: 'Operations',
         description: 'CI/CD, deployment, infrastructure',
-        defaultModel: 'openai/gpt-5.3-codex',
+        defaultModel: 'github-copilot/gpt-5.2-codex',
         defaultTemperature: 0.3,
         defaultTools: { write: true, edit: true, bash: true },
       },
@@ -97,25 +97,25 @@ const DEFAULT_CONFIG: Pro0Config = {
     },
     'frontend-coder': {
       enabled: true,
-      model: 'openai/gpt-5.3-codex',
+      model: 'github-copilot/gpt-5.2-codex',
       temperature: 0.3,
       category: 'coding',
     },
     'backend-coder': {
       enabled: true,
-      model: 'openai/gpt-5.3-codex',
+      model: 'github-copilot/gpt-5.2-codex',
       temperature: 0.3,
       category: 'coding',
     },
     'database-coder': {
       enabled: true,
-      model: 'openai/gpt-5.3-codex',
+      model: 'github-copilot/gpt-5.2-codex',
       temperature: 0.2,
       category: 'coding',
     },
     'api-coder': {
       enabled: true,
-      model: 'openai/gpt-5.3-codex',
+      model: 'github-copilot/gpt-5.2-codex',
       temperature: 0.3,
       category: 'coding',
     },
@@ -133,7 +133,7 @@ const DEFAULT_CONFIG: Pro0Config = {
     },
     'devops-engineer': {
       enabled: true,
-      model: 'openai/gpt-5.3-codex',
+      model: 'github-copilot/gpt-5.2-codex',
       temperature: 0.3,
       category: 'ops',
     },
@@ -183,6 +183,14 @@ const DEFAULT_CONFIG: Pro0Config = {
       maxIterations: 5,
       subAgentModel: 'github-copilot/claude-sonnet-4.5',
     },
+  },
+
+  agentTeams: {
+    enabled: false,
+    maxTeammates: 10,
+    teammateMode: 'auto',
+    pollIntervalMs: 3000,
+    cleanupOnExit: true,
   },
 
   verification: {
@@ -462,6 +470,29 @@ export function validateConfig(config: Pro0Config): void {
       (typeof deepthinkConfig.timeout !== 'number' || Number.isNaN(deepthinkConfig.timeout))
     ) {
       throw new Error('Error: deepthink timeout must be a number');
+    }
+  }
+
+  // Agent Teams validation
+  const agentTeamsConfig = config.agentTeams;
+  if (agentTeamsConfig) {
+    if (typeof agentTeamsConfig.enabled !== 'boolean') {
+      throw new Error('Error: agentTeams.enabled must be a boolean');
+    }
+    if (agentTeamsConfig.maxTeammates < 1) {
+      throw new Error('Error: agentTeams.maxTeammates must be at least 1');
+    }
+    const allowedTeammateModes = ['in-process', 'tmux', 'iterm2', 'auto'] as const;
+    if (!allowedTeammateModes.includes(agentTeamsConfig.teammateMode)) {
+      throw new Error(
+        `Error: Invalid agentTeams.teammateMode '${agentTeamsConfig.teammateMode}'. Expected one of ${allowedTeammateModes.join(', ')}`
+      );
+    }
+    if (agentTeamsConfig.pollIntervalMs < 100) {
+      throw new Error('Error: agentTeams.pollIntervalMs must be at least 100ms');
+    }
+    if (typeof agentTeamsConfig.cleanupOnExit !== 'boolean') {
+      throw new Error('Error: agentTeams.cleanupOnExit must be a boolean');
     }
   }
 }

@@ -34,7 +34,7 @@
       "coding": {
         "name": "Coding",
         "description": "Implementation, refactoring, bug fixes",
-        "defaultModel": "openai/gpt-5.3-codex",
+        "defaultModel": "github-copilot/gpt-5.2-codex",
         "defaultTemperature": 0.3,
         "defaultTools": { "write": true, "edit": true, "bash": true }
       },
@@ -55,7 +55,7 @@
       "ops": {
         "name": "Operations",
         "description": "CI/CD, deployment, infrastructure",
-        "defaultModel": "openai/gpt-5.3-codex",
+        "defaultModel": "github-copilot/gpt-5.2-codex",
         "defaultTemperature": 0.3,
         "defaultTools": { "write": true, "edit": true, "bash": true }
       },
@@ -78,25 +78,25 @@
     },
     "frontend-coder": {
       "enabled": true,
-      "model": "openai/gpt-5.3-codex",
+      "model": "github-copilot/gpt-5.2-codex",
       "temperature": 0.3,
       "category": "coding"
     },
     "backend-coder": {
       "enabled": true,
-      "model": "openai/gpt-5.3-codex",
+      "model": "github-copilot/gpt-5.2-codex",
       "temperature": 0.3,
       "category": "coding"
     },
     "database-coder": {
       "enabled": true,
-      "model": "openai/gpt-5.3-codex",
+      "model": "github-copilot/gpt-5.2-codex",
       "temperature": 0.2,
       "category": "coding"
     },
     "api-coder": {
       "enabled": true,
-      "model": "openai/gpt-5.3-codex",
+      "model": "github-copilot/gpt-5.2-codex",
       "temperature": 0.3,
       "category": "coding"
     },
@@ -114,7 +114,7 @@
     },
     "devops-engineer": {
       "enabled": true,
-      "model": "openai/gpt-5.3-codex",
+      "model": "github-copilot/gpt-5.2-codex",
       "temperature": 0.3,
       "category": "ops"
     },

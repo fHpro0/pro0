@@ -169,6 +169,25 @@ export interface SkillsConfig {
 }
 
 // ---------------------------------------------------------------------------
+// Agent Teams (Experimental)
+// ---------------------------------------------------------------------------
+
+export type TeammateDisplayMode = 'in-process' | 'tmux' | 'iterm2' | 'auto';
+
+export interface AgentTeamsConfig {
+  /** Enable agent teams feature (experimental) */
+  enabled: boolean;
+  /** Maximum teammates per team (default: 10) */
+  maxTeammates: number;
+  /** Display mode for teammates */
+  teammateMode: TeammateDisplayMode;
+  /** Poll interval for checking messages/status (ms, default: 3000) */
+  pollIntervalMs: number;
+  /** Clean up team resources on exit (default: true) */
+  cleanupOnExit: boolean;
+}
+
+// ---------------------------------------------------------------------------
 // Verification
 // ---------------------------------------------------------------------------
 
@@ -188,6 +207,7 @@ export interface Pro0Config {
   team: TeamConfig;
   templates: TemplatesConfig;
   skills?: SkillsConfig;
+  agentTeams?: AgentTeamsConfig;
   verification?: VerificationConfig;
 }
 
@@ -203,6 +223,7 @@ export type PartialPro0Config = {
   };
   templates?: Partial<TemplatesConfig>;
   skills?: Partial<SkillsConfig>;
+  agentTeams?: Partial<AgentTeamsConfig>;
   verification?: Partial<VerificationConfig>;
 
   // Legacy keys (auto-migrated)

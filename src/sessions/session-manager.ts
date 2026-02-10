@@ -16,6 +16,7 @@
 import type { OpencodeClient } from '@opencode-ai/sdk';
 import type { DynamicAgentDefinition, TeamConfig } from '../types/config.js';
 import type { AgentMessage } from './message-protocol.js';
+import type { TeamMember } from '../teams/types.js';
 import {
   serializeMessage,
   createTaskAssignment,
@@ -32,6 +33,12 @@ import {
   incrementSpawnCount,
 } from '../agents/registry.js';
 import { checkThrottle } from '../agents/resource-monitor.js';
+import {
+  addTeammate,
+  getTeamMembers,
+  isTeamLead,
+} from '../teams/team-config.js';
+import { getTaskPath, getMailboxPath } from '../teams/storage.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -181,7 +188,8 @@ export class SessionManager {
         body: {
           parts: [{ type: 'text', text: promptText }],
           system: agent.prompt,
-          tools: agent.tools,
+          // Don't pass tools - let SDK provide all available tools by default
+          // TODO: Filter tools based on agent.tools permission map if needed
         },
       });
 
@@ -198,6 +206,214 @@ export class SessionManager {
       console.error(`[PRO0] Failed to spawn agent "${agent.name}":`, errMsg);
       return { success: false, error: errMsg };
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // Spawn teammate (for agent teams)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Spawn a new teammate agent and add to the team.
+   * 
+   * Similar to spawn() but:
+   * 1. Adds the agent to the team config
+   * 2. Passes team context (members, mailbox path, task list path) to the teammate
+   * 3. Uses the teammate prompt template
+   * 
+   * @param teamName - Team to join
+   * @param callerAgentId - Agent ID of the team lead (for permission validation)
+   * @param name - Teammate display name
+   * @param category - Agent category (coding, review, etc.)
+   * @param task - Task description
+   * @param todoId - Optional manager todo ID to link
+   */
+  async spawnTeammate(params: {
+    teamName: string;
+    callerAgentId: string;
+    name: string;
+    category: string;
+    task: string;
+    todoId?: string;
+  }): Promise<SpawnResult & { teammateId?: string }> {
+    const { teamName, callerAgentId, name, category, task, todoId } = params;
+
+    // --- Permission check: caller must be team lead ---
+    if (!isTeamLead(teamName, callerAgentId)) {
+      return {
+        success: false,
+        error: 'Only the team lead can spawn teammates',
+      };
+    }
+
+    // --- Generate unique teammate agent ID ---
+    const teammateId = `teammate-${teamName}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+    // --- Create session first (we need sessionId for TeamMember) ---
+    let sessionId: string;
+    try {
+      const createResult = await this.client.session.create({
+        body: {
+          parentID: this.parentSessionId,
+          title: `[PRO0 Team: ${teamName}] ${name}`,
+        },
+      });
+
+      if (!createResult.data) {
+        return { success: false, error: 'Failed to create teammate session: no data returned' };
+      }
+
+      sessionId = createResult.data.id;
+    } catch (err) {
+      return {
+        success: false,
+        error: `Failed to create session: ${err instanceof Error ? err.message : String(err)}`,
+      };
+    }
+
+    // --- Add teammate to team config ---
+    try {
+      const member: TeamMember = {
+        name,
+        agentId: teammateId,
+        category,
+        sessionId,
+        spawnedAt: new Date().toISOString(),
+        status: 'active',
+      };
+      addTeammate(teamName, member);
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
+
+    // --- Build task and session records ---
+    try {
+      const taskId = `task-${teammateId}`;
+
+      // --- Build task session record ---
+      const taskSession: TaskSession = {
+        agentId: teammateId,
+        agentName: name,
+        sessionId,
+        status: 'starting',
+        taskId,
+        startedAt: new Date().toISOString(),
+        category,
+        todoId,
+      };
+
+      this.taskSessions.set(taskId, taskSession);
+      markActive(teammateId, sessionId);
+      incrementSpawnCount();
+
+      // --- Build team context ---
+      const members = getTeamMembers(teamName);
+      const teamContext = {
+        teamName,
+        teammateId,
+        teammates: members.map((m) => ({
+          id: m.agentId,
+          name: m.name,
+          category: m.category,
+          status: m.status,
+        })),
+        taskListPath: getTaskPath(teamName),
+        mailboxPath: getMailboxPath(teamName, teammateId),
+      };
+
+      // --- Load teammate prompt template ---
+      // TODO: Load from prompts/teammate-template.md
+      const systemPrompt = this.buildTeammatePrompt(teamContext, task);
+
+      // --- Send task prompt ---
+      const promptText = `You are "${name}", a ${category} agent on team "${teamName}".
+
+**Your Task:**
+${task}
+
+**Team Context:**
+- Team: ${teamName}
+- Your ID: ${teammateId}
+- Teammates: ${members.filter((m) => m.agentId !== teammateId).map((m) => `${m.name} (${m.category})`).join(', ')}
+- Task list: ${teamContext.taskListPath}
+- Your mailbox: ${teamContext.mailboxPath}
+
+**Available Tools:**
+- claim_task - Claim a task from the shared task list
+- complete_task - Mark a task complete
+- send_message - Send message to another teammate
+- check_messages - Check your mailbox
+- get_team_members - List all team members
+- approve_shutdown / reject_shutdown - Respond to shutdown requests
+
+**Instructions:**
+1. Use claim_task to get work from the shared task list
+2. Complete your work and call complete_task
+3. Use send_message to coordinate with other teammates
+4. Poll check_messages regularly for updates from the team lead
+5. When done, report your results and wait for shutdown approval
+
+Begin by checking for claimable tasks or working on your assigned task.`;
+
+      await this.client.session.promptAsync({
+        path: { id: sessionId },
+        body: {
+          parts: [{ type: 'text', text: promptText }],
+          system: systemPrompt,
+        },
+      });
+
+      taskSession.status = 'running';
+
+      // --- Start polling ---
+      this.startPolling(taskId, sessionId);
+
+      console.log(
+        `[PRO0] Spawned teammate "${name}" on team "${teamName}" (session: ${sessionId}, task: ${taskId})`
+      );
+
+      return { success: true, taskSession, teammateId };
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error(`[PRO0] Failed to spawn teammate "${name}":`, errMsg);
+      return { success: false, error: errMsg };
+    }
+  }
+
+  /**
+   * Build teammate system prompt with team context.
+   * In the future, this will load from prompts/teammate-template.md
+   */
+  private buildTeammatePrompt(teamContext: any, task: string): string {
+    return `You are a teammate agent in the PRO0 agent teams system.
+
+**Team:** ${teamContext.teamName}
+**Your ID:** ${teamContext.teammateId}
+
+**Role:**
+You are an autonomous agent working alongside other teammates to complete shared goals.
+You coordinate via:
+- Shared task list (claim tasks, complete tasks, track dependencies)
+- Mailbox messaging (direct messages, broadcasts, notifications)
+- Shutdown protocol (graceful shutdown when team lead requests it)
+
+**Communication:**
+- Use send_message to communicate with specific teammates
+- Use check_messages regularly to receive updates
+- Respond to shutdown requests via approve_shutdown or reject_shutdown
+
+**Constraints:**
+- Never modify files outside your assigned scope
+- Never commit to git without explicit team lead approval
+- Always coordinate with teammates before making breaking changes
+- Poll your mailbox every few actions to stay synchronized
+
+**Your Task:**
+${task}
+
+Focus on completing your task efficiently while coordinating with the team.`;
   }
 
   // -------------------------------------------------------------------------
