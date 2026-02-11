@@ -123,7 +123,7 @@ export class SessionManager {
    *
    * 1. Checks capacity (maxParallel, maxTotal, resource throttle)
    * 2. Creates a child session via the SDK
-   * 3. Sends the task prompt via promptAsync
+   * 3. Sends the task prompt via promptAsync with category-defined model
    * 4. Starts polling for completion
    *
    * Returns immediately after the session is created and prompt sent.
@@ -176,18 +176,31 @@ export class SessionManager {
       markActive(agent.id, sessionId);
       incrementSpawnCount();
 
-      // --- Send task prompt ---
+      // --- Send task prompt with model from agent config ---
       const taskMsg = createTaskAssignment(agent.id, agent.prompt, taskId, {
         parentTaskId: agent.parentTaskId,
       });
 
       const promptText = wrapForPrompt(taskMsg, agent.prompt);
 
+      // Parse model string (format: "github-copilot/gpt-5.2-codex")
+      let modelConfig: { providerID: string; modelID: string } | undefined;
+      if (agent.model) {
+        const parts = agent.model.split('/');
+        if (parts.length === 2) {
+          modelConfig = {
+            providerID: parts[0],
+            modelID: parts[1],
+          };
+        }
+      }
+
       await this.client.session.promptAsync({
         path: { id: sessionId },
         body: {
           parts: [{ type: 'text', text: promptText }],
           system: agent.prompt,
+          model: modelConfig,
           // Don't pass tools - let SDK provide all available tools by default
           // TODO: Filter tools based on agent.tools permission map if needed
         },
@@ -213,17 +226,12 @@ export class SessionManager {
   // -------------------------------------------------------------------------
 
   /**
-   * Spawn a new teammate agent and add to the team.
-   * 
-   * Similar to spawn() but:
-   * 1. Adds the agent to the team config
-   * 2. Passes team context (members, mailbox path, task list path) to the teammate
-   * 3. Uses the teammate prompt template
-   * 
-   * @param teamName - Team to join
-   * @param callerAgentId - Agent ID of the team lead (for permission validation)
-   * @param name - Teammate display name
-   * @param category - Agent category (coding, review, etc.)
+   * Spawn a teammate agent for team-based coordination.
+   *
+   * @param teamName - Team to add teammate to
+   * @param callerAgentId - ID of calling agent (must be team lead)
+   * @param name - Display name for the teammate
+   * @param category - Category (coding, review, research, ops, design)
    * @param task - Task description
    * @param todoId - Optional manager todo ID to link
    */
@@ -236,6 +244,23 @@ export class SessionManager {
     todoId?: string;
   }): Promise<SpawnResult & { teammateId?: string }> {
     const { teamName, callerAgentId, name, category, task, todoId } = params;
+
+    // --- Permission check: caller must be team lead ---
+    if (!isTeamLead(teamName, callerAgentId)) {
+      return {
+        success: false,
+        error: 'Only the team lead can spawn teammates',
+      };
+    }
+
+    // --- Get category config for model ---
+    const categoryConfig = this.teamConfig.categories[category];
+    if (!categoryConfig) {
+      return {
+        success: false,
+        error: `Unknown category: ${category}. Valid: ${Object.keys(this.teamConfig.categories).join(', ')}`,
+      };
+    }
 
     // --- Permission check: caller must be team lead ---
     if (!isTeamLead(teamName, callerAgentId)) {
@@ -327,7 +352,7 @@ export class SessionManager {
       // TODO: Load from prompts/teammate-template.md
       const systemPrompt = this.buildTeammatePrompt(teamContext, task);
 
-      // --- Send task prompt ---
+      // --- Send task prompt with category model ---
       const promptText = `You are "${name}", a ${category} agent on team "${teamName}".
 
 **Your Task:**
@@ -357,11 +382,24 @@ ${task}
 
 Begin by checking for claimable tasks or working on your assigned task.`;
 
+      // Parse model string for category (format: "github-copilot/gpt-5.2-codex")
+      let modelConfig: { providerID: string; modelID: string } | undefined;
+      if (categoryConfig.defaultModel) {
+        const parts = categoryConfig.defaultModel.split('/');
+        if (parts.length === 2) {
+          modelConfig = {
+            providerID: parts[0],
+            modelID: parts[1],
+          };
+        }
+      }
+
       await this.client.session.promptAsync({
         path: { id: sessionId },
         body: {
           parts: [{ type: 'text', text: promptText }],
           system: systemPrompt,
+          model: modelConfig,
         },
       });
 

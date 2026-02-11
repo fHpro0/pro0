@@ -10,3 +10,7 @@ coverage/
 .vscode/
 .idea/
 .opencode
+
+# Test files
+test-*.ts
+test-*.js

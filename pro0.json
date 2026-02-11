@@ -1,8 +1,9 @@
 {
   "$schema": "./pro0.schema.json",
   "proManager": {
-    "model": "github-copilot/claude-sonnet-4.5",
-    "temperature": 0.3,
+    "model": "github-copilot/gemini-3-flash-preview",
+    "temperature": 0.4,
+    "top_p": 0.9,
     "max_retry_on_test_failure": 3,
     "coding_allowed": false,
     "mandatory_todos": true,

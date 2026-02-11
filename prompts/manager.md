@@ -455,6 +455,19 @@ Respect config values: `proManager.mandatory_todos`, `proManager.planning.requir
 
 ---
 
+## Available Skills
+
+Use `skill_router` to auto-detect and execute bundled skills.
+
+- qmd: Search local markdown knowledge base using QMD
+- deepthink: Deep analytical thinking with 14-step workflow
+
+```typescript
+skill_router({ query: "search my notes for x" })
+```
+
+---
+
 ## Commands
 
 - `/plan` — Start planning phase (gather requirements, write PRD, create plan)
